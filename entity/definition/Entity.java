@@ -8,8 +8,27 @@ import java.io.Serializable;
  *
  */
 
+@SuppressWarnings("serial")
 public abstract class Entity implements Serializable, Cloneable {
 
-	private static final long serialVersionUID = 4369473432043832732L;
+	@Override
+	public int hashCode() {
+		return utils.Utilities.hash(this);
+	}
+	
+	@Override
+	public boolean equals(final Object o) {
+		if(getClass()==o.getClass()) {
+			return utils.Utilities.equals(this, (Entity)o);
+		}else return false;
+	}
+	
+	@Override
+	public Entity clone() {
+		return utils.Utilities.clone(this);
+	}
+	
+	@Override
+	public void finalize() {}
 
 }

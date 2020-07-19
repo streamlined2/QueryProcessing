@@ -20,5 +20,13 @@ class Tuple {
 	void add(final Object value) {
 		properties.add(value);
 	}
+	
+	@Override public int hashCode() {
+		return properties.hashCode();
+	}
+	
+	@Override public boolean equals(final Object o) {
+		return (o instanceof Tuple)?properties.equals(((Tuple)o).properties):false;
+	}
 
 }
