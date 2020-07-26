@@ -30,4 +30,8 @@ public class Property<T extends Entity> {
 		return (o instanceof Property) ? getter.equals(((Property<T>)o).getter):false;
 	}
 	
+	@Override public String toString() {
+		return getter.toString();
+	}
+	
 }

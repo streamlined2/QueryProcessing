@@ -2,7 +2,9 @@ package utils;
 
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -18,6 +20,13 @@ import java.io.Serializable;
 public final class Utilities {
 	
 	private Utilities(){}//never instantiate the class
+	
+	public static <T extends Serializable> String toString(final T obj) {
+		final Object[] fields=evaluateFields(obj);
+		StringJoiner joiner=new StringJoiner(",","{","}");
+		Arrays.asList(fields).forEach(x->joiner.add(x.toString()));
+		return joiner.toString();
+	}
 	
 	public static <T extends Serializable> boolean equals(final T a,final T b) {
 		if(a!=null && b!=null) {

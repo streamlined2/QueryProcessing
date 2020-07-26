@@ -10,7 +10,12 @@ import java.io.Serializable;
 
 @SuppressWarnings("serial")
 public abstract class Entity implements Serializable, Cloneable {
-
+	
+	@Override
+	public String toString() {
+		return utils.Utilities.toString(this);
+	}
+	
 	@Override
 	public int hashCode() {
 		return utils.Utilities.hash(this);
