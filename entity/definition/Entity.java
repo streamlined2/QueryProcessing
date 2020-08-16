@@ -34,6 +34,6 @@ public abstract class Entity implements Serializable, Cloneable {
 	}
 	
 	@Override
-	public void finalize() {}
+	public void finalize() {}//TODO complete method implementation
 
 }

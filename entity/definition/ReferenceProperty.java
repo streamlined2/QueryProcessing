@@ -11,8 +11,8 @@ import java.util.function.Function;
  */
 
 public class ReferenceProperty<T extends Entity,R extends Entity> extends Property<T> {
-
-	public ReferenceProperty(Function<T, R> getter) {
+	
+	public ReferenceProperty(final Function<T, R> getter) {
 		super(getter);
 	}
 
