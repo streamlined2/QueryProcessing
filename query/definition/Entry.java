@@ -1,23 +1,40 @@
 package query.definition;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import entity.definition.Entity;
-import entity.definition.Source;
 
 public class Entry<T extends Entity> {
-	private final Source<T> source;
+	private final Query query;
+	private final Class<T> entityClass;
 	private final PredicateList<T> predicates;
+	private Character alias;
 	
-	public Entry(final Source<T> source){
-		this.source=source;
+	public Entry(final Query query,final Class<T> entityClass,final Character alias){
+		this.query=query;
+		this.entityClass=entityClass;
+		this.alias=alias;
 		predicates=new PredicateList<T>();
 	}
 	
+	@SuppressWarnings("unchecked")
+	public <R> Entry<T> select(final Function<T,R>... getters) {
+		for(final Function<T,R> getter:getters) {
+			query.select(new QualifiedProperty<T,R>(this,getter));
+		}
+		return this;
+	}
+	
+	public Character getAlias() {
+		return alias;
+	}
+	
 	public Class<T> getEntityClass(){
-		return source.getEntityClass();
+		return entityClass;
 	}
 	
 	int getPredicateCount() {
@@ -48,16 +65,16 @@ public class Entry<T extends Entity> {
 	}
 	
 	@Override public int hashCode() {
-		return source.hashCode();
+		return Objects.hash(entityClass.hashCode(),getAlias());
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override public boolean equals(final Object o) {
 		return (o instanceof Entry)?
-				source.equals(((Entry<T>)o).source):false;
+				entityClass.equals(((Entry<T>)o).entityClass):false;
 	}
 	
 	@Override public String toString() {
-		return source.getEntityClass().getSimpleName();
+		return entityClass.getSimpleName();
 	}
 }

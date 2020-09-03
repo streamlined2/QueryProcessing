@@ -1,17 +1,16 @@
 package query.processor;
 
-import java.io.ObjectStreamField;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import query.definition.Query;
+import entity.definition.DataSource;
 import entity.definition.Entity;
+import entity.definition.Property;
 import query.definition.Entry;
 import query.definition.EntryList;
-import entity.definition.Property;
-import entity.definition.ReferenceProperty;
 import query.definition.QueryResult;
-import utils.Utilities;
 
 /**
  * Query processor interface
@@ -21,31 +20,19 @@ import utils.Utilities;
 
 public interface QueryProcessor {
 	
-	public class QueryException extends Exception {
-		public QueryException(final String msg) {
-			super(msg);
-		}
-	}
-	
-	public class NoRelationException extends QueryException {
-		public NoRelationException(final Entry<? extends Entity> src,final Entry<? extends Entity> dst){
-			super(String.format("can't establish relation between %s and %s", src, dst));
-		}
-	}
-	
-	QueryResult fetch() throws QueryException;
+	QueryResult fetch(final Query query,final DataSource dataSource) throws QueryException;
 	
 	class Relation<T extends Entity,R extends Entity> {
 		private final Entry<R> destination;
-		private final ReferenceProperty<T, R> reference;
+		private final Property<T, R> reference;
 		
-		Relation(final Entry<R> dest,final ReferenceProperty<T, R> ref){
+		Relation(final Entry<R> dest,final Property<T, R> ref){
 			destination=dest;
 			reference=ref;
 		}
 		
 		Entry<R> getDestination(){ return destination;	}
-		ReferenceProperty<T, R> getReference(){ return reference;}
+		Property<T, R> getReference(){ return reference;}
 	}
 
 	default <T extends Entity,R extends Entity> 

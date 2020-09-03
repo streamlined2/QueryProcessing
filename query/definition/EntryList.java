@@ -14,8 +14,10 @@ public class EntryList implements Iterable<Entry<? extends Entity>> {
 		return entries.isEmpty();
 	}
 	
-	public void add(final Entry<? extends Entity> entry) {
+	public <T extends Entity> Entry<T> add(final Query query,final Class<T> entityClass) {
+		final Entry<T> entry=new Entry<>(query,entityClass,getNextAlias());
 		entries.add(entry);
+		return entry;
 	}
 	
 	public Entry<? extends Entity> get(final int index){
@@ -26,19 +28,19 @@ public class EntryList implements Iterable<Entry<? extends Entity>> {
 		return entries.size();
 	}
 	
-	public Character getAlias(final Entry<? extends Entity> e) {
-		int index=entries.indexOf(e);
-		if(index!=-1) {
-			return Character.valueOf((char)('A'+index));			
+	private Character getNextAlias() {
+		final int nextIndex=entries.size();
+		if(nextIndex<('Z'-'A'+1)) {
+			return Character.valueOf((char)('A'+nextIndex));			
 		}else {
-			throw new RuntimeException(String.format("Entry %s not found in list.", e));
+			throw new RuntimeException(String.format("There are too many entries in the query already."));
 		}
 	}
 	
 	@Override
 	public String toString() {
-		StringJoiner joiner=new StringJoiner(",");
-		entries.forEach((Entry<? extends Entity> x)->joiner.add(x.toString()));
+		final StringJoiner joiner=new StringJoiner(",");
+		entries.forEach((Entry<? extends Entity> x)->joiner.add(x.toString()+" AS "+x.getAlias()));
 		return joiner.toString();
 	}
 

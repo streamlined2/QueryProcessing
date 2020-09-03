@@ -4,27 +4,33 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import entity.definition.Entity;
+import entity.definition.FunctionalProperty;
+import entity.definition.GetterProperty;
 import entity.definition.Property;
 
-public class QualifiedProperty<T extends Entity> {
+public class QualifiedProperty<T extends Entity,R> {
 	private final Entry<T> entry;
-	private final Property<T> property;
+	private final Property<T,R> property;
 	
-	public QualifiedProperty(final Entry<T> entry,final Property<T> property) {
+	public QualifiedProperty(final Entry<T> entry,final Property<T,R> property) {
 		this.entry=entry;
 		this.property=property;
 	}
 	
-	public QualifiedProperty(final Entry<T> entry,final Function<T,?> getter){
-		this(entry,new Property<T>(getter));
+	public QualifiedProperty(final Entry<T> entry,final Function<T,R> getter){
+		this(entry,new FunctionalProperty<T,R>(getter));
+	}
+	
+	public QualifiedProperty(final Entry<T> entry,final String methodName){
+		this(entry,new GetterProperty<T,R>(entry.getEntityClass(),methodName));
 	}
 	
 	public Entry<T> getEntry() { return entry;}
-	public Property<T> getProperty() { return property;}
+	public Property<T,R> getProperty() { return property;}
 	
 	@Override public String toString() {
 		return new StringBuilder().
-				append(entry).append(".").
+				append(entry.getAlias()).append(".").
 				append(property).toString();
 	}
 	
@@ -32,10 +38,11 @@ public class QualifiedProperty<T extends Entity> {
 		return Objects.hash(entry,property);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override public boolean equals(final Object o) {
 		return (o instanceof QualifiedProperty)?
-				entry.equals(((QualifiedProperty<?>)o).entry) && 
-				property.equals(((QualifiedProperty<?>)o).property):
+				entry.equals(((QualifiedProperty<T,R>)o).entry) && 
+				property.equals(((QualifiedProperty<T,R>)o).property):
 					false;
 	}
 }

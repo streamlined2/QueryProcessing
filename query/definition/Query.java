@@ -1,9 +1,9 @@
 package query.definition;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import entity.definition.Entity;
-import entity.definition.Source;
 
 /**
  * Holds query definition
@@ -11,7 +11,7 @@ import entity.definition.Source;
  *
  */
 
-public class Query {
+public class Query implements Iterable<Entry<? extends Entity>>{
 	
 	private final EntryList entries=new EntryList();
 	private final PropertyList selectProperties=new PropertyList();//fetch no properties at all, if empty
@@ -21,8 +21,8 @@ public class Query {
 	private final Map<Entry<? extends Entity>,Entry<? extends Entity>> joints=new HashMap<>();//to register links between data entries
 	
 	@SafeVarargs
-	public Query(final Source<? extends Entity>...sources) {
-		for(int k=0;k<sources.length;k++) addEntry(sources[k]);
+	public Query(final Class<? extends Entity>...entityClasses) {
+		for(int k=0;k<entityClasses.length;k++) addEntry(entityClasses[k]);
 	}
 	
 	public Entry<? extends Entity> getEntry(final int index) {
@@ -30,38 +30,36 @@ public class Query {
 		return entries.get(index);
 	}
 	
-	public <T extends Entity> Entry<T> addEntry(final Source<T> source) {
-		final Entry<T> entry=new Entry<>(source);
-		entries.add(entry);
-		return entry;
+	public <T extends Entity> Entry<T> addEntry(final Class<T> entityClass){
+		return entries.add(this, entityClass);
 	}
 	
 	@SafeVarargs
-	public final void select(final QualifiedProperty<? extends Entity>...properties) {
+	public final void select(final QualifiedProperty<? extends Entity,?>...properties) {
 		selectProperties.addProperties(properties);
 	}
 	
 	@SafeVarargs
-	public final void sortBy(final QualifiedProperty<? extends Entity>...properties) {
+	public final void sortBy(final QualifiedProperty<? extends Entity,?>...properties) {
 		sortByProperties.addProperties(properties);
 	}
 	
 	@SafeVarargs
-	public final void groupBy(final QualifiedProperty<? extends Entity>...properties) {
+	public final void groupBy(final QualifiedProperty<? extends Entity,?>...properties) {
 		groupByProperties.addProperties(properties);
 	}
 	
 	@SafeVarargs
-	public final void havingBy(final QualifiedProperty<? extends Entity>...properties) {
+	public final void havingBy(final QualifiedProperty<? extends Entity,?>...properties) {
 		havingByProperies.addProperties(properties);
 	}
 	
 	private StringBuilder selectClause() {
-		return new StringBuilder().append("SELECT ").append(selectProperties);
+		return new StringBuilder().append("SELECT ").append(selectProperties).append(selectProperties.empty()?"":"\n");
 	}
 	
 	private StringBuilder fromClause() {
-		return new StringBuilder().append("FROM ").append(entries);
+		return new StringBuilder().append("FROM ").append(entries).append(entries.empty()?"":"\n");
 	}
 	
 	private StringBuilder whereClause() {
@@ -69,6 +67,7 @@ public class Query {
 		if(countPredicates()!=0) {
 			b.append("WHERE ");
 			entries.forEach(x->b.append(x.predicateClause()));
+			b.append("\n");
 		}
 		return b;			
 	}
@@ -81,32 +80,41 @@ public class Query {
 	
 	private StringBuilder orderByClause() {
 		final StringBuilder b=new StringBuilder();
-		if(!sortByProperties.empty()) b.append("ORDER BY ").append(sortByProperties);
+		if(!sortByProperties.empty()) b.append("ORDER BY ").append(sortByProperties).append(sortByProperties.empty()?"":"\n");
 		return b;
 	}
 
 	private StringBuilder groupByClause() {
 		final StringBuilder b=new StringBuilder();
-		if(!groupByProperties.empty()) b.append("GROUP BY ").append(groupByProperties);
+		if(!groupByProperties.empty()) b.append("GROUP BY ").append(groupByProperties).append(groupByProperties.empty()?"":"\n");
 		return b;
 	}
 
 	private StringBuilder havingByClause() {
 		final StringBuilder b=new StringBuilder();
-		if(!havingByProperies.empty()) b.append("HAVING BY ").append(havingByProperies);
+		if(!havingByProperies.empty()) b.append("HAVING BY ").append(havingByProperies).append(havingByProperies.empty()?"":"\n");
 		return b;
 	}
 
 	@Override
 	public String toString() {
 		return new StringBuilder()
-				.append(selectClause()).append('\n')
-				.append(fromClause()).append('\n')
-				.append(whereClause()).append('\n')
-				.append(orderByClause()).append('\n')
-				.append(groupByClause()).append('\n')
-				.append(havingByClause()).append('\n')
+				.append(selectClause())
+				.append(fromClause())
+				.append(whereClause())
+				.append(orderByClause())
+				.append(groupByClause())
+				.append(havingByClause())
 				.toString();
+	}
+
+	@Override
+	public Iterator<Entry<? extends Entity>> iterator() {
+		return entries.iterator();
+	}
+	
+	public Iterator<QualifiedProperty<? extends Entity, ?>> selectIterator(final Entry<? extends Entity> entry){
+		return selectProperties.iterator(entry);
 	}
 	
 }

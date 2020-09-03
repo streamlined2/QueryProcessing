@@ -12,28 +12,28 @@ import java.util.StringJoiner;
 
 class Tuple {
 	
-	private final List<Object> properties;
+	private final List<Object> values;
 	
 	Tuple(final int dimension){
-		properties=new ArrayList<>(dimension);
+		values=new ArrayList<>(dimension);
 	}
 	
 	void add(final Object value) {
-		properties.add(value);
+		values.add(value);
 	}
 	
 	@Override public int hashCode() {
-		return properties.hashCode();
+		return values.hashCode();
 	}
 	
 	@Override public boolean equals(final Object o) {
-		return (o instanceof Tuple)?properties.equals(((Tuple)o).properties):false;
+		return (o instanceof Tuple)?values.equals(((Tuple)o).values):false;
 	}
 	
 	@Override
 	public String toString() {
-		StringJoiner joiner=new StringJoiner(",","{","}");
-		properties.forEach(x->joiner.add(x.toString()));
+		StringJoiner joiner=new StringJoiner(",","[","]");
+		values.forEach(x->joiner.add(x.toString()));
 		return joiner.toString();
 	}
 

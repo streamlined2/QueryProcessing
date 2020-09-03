@@ -3,6 +3,7 @@ package query.definition;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * Represents result of query processing
@@ -20,6 +21,12 @@ public class QueryResult implements Iterable<Tuple> {
 	@Override
 	public Iterator<Tuple> iterator() {
 		return tuples.iterator();
+	}
+	
+	@Override public String toString() {
+		final StringJoiner joiner=new StringJoiner("\n");
+		forEach(x->joiner.add(x.toString()));
+		return joiner.toString();
 	}
 
 }

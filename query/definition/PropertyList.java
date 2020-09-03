@@ -8,14 +8,14 @@ import java.util.StringJoiner;
 
 import entity.definition.Entity;
 
-class PropertyList implements Iterable<QualifiedProperty<? extends Entity>>{
-	private List<QualifiedProperty<? extends Entity>> properties=new LinkedList<>();
+class PropertyList implements Iterable<QualifiedProperty<? extends Entity,?>>{
+	private List<QualifiedProperty<? extends Entity,?>> properties=new LinkedList<>();
 	
-	void addProperty(final QualifiedProperty<? extends Entity> property) {
+	void addProperty(final QualifiedProperty<? extends Entity,?> property) {
 		properties.add(property);
 	}
 	
-	void addProperties(final QualifiedProperty<? extends Entity>[] properties) {
+	void addProperties(final QualifiedProperty<? extends Entity,?>[] properties) {
 		this.properties.addAll(Arrays.asList(properties));
 	}
 	
@@ -27,19 +27,19 @@ class PropertyList implements Iterable<QualifiedProperty<? extends Entity>>{
 	}
 
 	@Override
-	public Iterator<QualifiedProperty<? extends Entity>> iterator() {
+	public Iterator<QualifiedProperty<? extends Entity,?>> iterator() {
 		return properties.iterator();
 	}
 	
-	public Iterator<QualifiedProperty<? extends Entity>> iterator(final Entry<? extends Entity> entry){
-		return new Iterator<QualifiedProperty<? extends Entity>>() {
+	public Iterator<QualifiedProperty<? extends Entity,?>> iterator(final Entry<? extends Entity> entry){
+		return new Iterator<QualifiedProperty<? extends Entity,?>>() {
 			
-			private Iterator<QualifiedProperty<? extends Entity>> iterator=iterator();
-			private QualifiedProperty<? extends Entity> stash=null;
+			private Iterator<QualifiedProperty<? extends Entity,?>> iterator=iterator();
+			private QualifiedProperty<? extends Entity,?> stash=null;
 			
-			private QualifiedProperty<? extends Entity> findNext() {
+			private QualifiedProperty<? extends Entity,?> findNext() {
 				while(iterator.hasNext()) {
-					final QualifiedProperty<? extends Entity> nextOne=iterator.next();
+					final QualifiedProperty<? extends Entity,?> nextOne=iterator.next();
 					if(nextOne.getEntry().equals(entry)) return nextOne;
 				}
 				return null;
@@ -51,7 +51,7 @@ class PropertyList implements Iterable<QualifiedProperty<? extends Entity>>{
 			}
 
 			@Override
-			public QualifiedProperty<? extends Entity> next() {
+			public QualifiedProperty<? extends Entity,?> next() {
 				return stash;
 			}
 			

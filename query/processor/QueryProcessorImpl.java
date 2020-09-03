@@ -1,5 +1,7 @@
 package query.processor;
 
+import entity.definition.DataSource;
+import query.definition.Query;
 import query.definition.QueryResult;
 
 /**
@@ -10,7 +12,7 @@ import query.definition.QueryResult;
 public class QueryProcessorImpl implements QueryProcessor {
 
 	@Override
-	public QueryResult fetch() throws QueryException {
+	public QueryResult fetch(final Query query,final DataSource dataSource) throws QueryException {
 		final QueryResult result=new QueryResult();
 		
 		  //for() { result.add(new Tuple()); }
