@@ -1,9 +1,8 @@
 package query.definition;
 
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import entity.definition.Entity;
+import entity.definition.Property;
 
 /**
  * Holds query definition
@@ -18,7 +17,7 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 	private final PropertyList sortByProperties=new PropertyList();//no ordering at all, if empty
 	private final PropertyList groupByProperties=new PropertyList();//no aggregation, if empty
 	private final PropertyList havingByProperies=new PropertyList();//no extra filtering after aggregation, if empty
-	private final Map<Entry<? extends Entity>,Entry<? extends Entity>> joints=new HashMap<>();//to register links between data entries
+	private final JointsMap joints=new JointsMap();//register links between data entries
 	
 	@SafeVarargs
 	public Query(final Class<? extends Entity>...entityClasses) {
@@ -32,6 +31,11 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 	
 	public <T extends Entity> Entry<T> addEntry(final Class<T> entityClass){
 		return entries.add(this, entityClass);
+	}
+	
+	public <T extends Entity,R extends Entity> void join(
+			final Entry<T> entry,final Entry<R> dest,final Property<T,R> property) {
+		joints.register(entry, dest, property);
 	}
 	
 	@SafeVarargs

@@ -7,6 +7,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import entity.definition.Entity;
+import entity.definition.Property;
 
 public class Entry<T extends Entity> {
 	private final Query query;
@@ -41,8 +42,8 @@ public class Entry<T extends Entity> {
 		return predicates.size();
 	}
 	
-	void join(final Entry<? extends Entity> dest) {
-		//TODO register link between two entries
+	public <R extends Entity> void  joinOn(final Entry<R> dest,final Property<T,R> property) {
+		query.join(this,dest,property);
 	}
 	
 	@SafeVarargs
