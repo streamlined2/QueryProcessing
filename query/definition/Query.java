@@ -1,6 +1,9 @@
 package query.definition;
 
 import java.util.Iterator;
+import java.util.Optional;
+import java.util.Set;
+
 import entity.definition.Entity;
 import entity.definition.Property;
 
@@ -119,6 +122,14 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 	
 	public Iterator<QualifiedProperty<? extends Entity, ?>> selectIterator(final Entry<? extends Entity> entry){
 		return selectProperties.iterator(entry);
+	}
+	
+	public final Set<Entry<? extends Entity>> getEntries(){
+		return entries.getEntrySet();
+	}
+	
+	public final Optional<Link<? extends Entity,? extends Entity>> getLink(final Entry<? extends Entity> entry){
+		return joints.getLink(entry); 
 	}
 	
 }

@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import utils.Utilities;
 
@@ -34,11 +35,11 @@ public class DataSource implements Iterable<EntitySource<? extends Entity>>{
 	}
 	
 	public boolean holdsDataFor(final Class<? extends Entity> entityClass) {
-		return getDataFor(entityClass)!=null;
+		return !getDataFor(entityClass).isEmpty();
 	}
 	
-	public EntitySource<? extends Entity> getDataFor(final Class<? extends Entity> entityClass){
-		return Utilities.linearSearch(data, entityClass, x->x.getEntityClass());
+	public Optional<EntitySource<? extends Entity>> getDataFor(final Class<? extends Entity> entityClass){
+		return Utilities.linearSearch(data, entityClass, (EntitySource<? extends Entity> x)->x.getEntityClass());
 	}
 
 }

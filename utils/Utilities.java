@@ -5,12 +5,12 @@ import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Function;
 
 import entity.definition.Entity;
-
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -28,18 +28,16 @@ public final class Utilities {
 	private Utilities(){}//never instantiate the class
 	
 	/**
-	 * Seeks for target reference of type {@code T} in given {@code entity}
-	 * @param <E> type of inspected entity
-	 * @param <T> type of reference property
-	 * @param entity to inspect for reference property
-	 * @param target type of reference property
+	 * Seeks for target reference of type {@code tgtClass} in given {@code srcClass}
+	 * @param srcClass entity type to inspect
+	 * @param tgtClass entity type referred to
 	 * @return set of suitable properties of type {@code target}
 	 */
-	public <E extends Entity,T extends Entity> Set<ObjectStreamField> getReferences(final E entity,final Class<T> target) {
-		final ObjectStreamField[] fields=getSerializableFields(entity.getClass());
+	public static Set<ObjectStreamField> getRelations(final Class<? extends Entity> srcClass,final Class<? extends Entity> tgtClass) {
+		final ObjectStreamField[] fields=getSerializableFields(srcClass);
 		final Set<ObjectStreamField> properties=new HashSet<>();
 		for(final ObjectStreamField property:fields) {
-			if(property.getType().equals(target)) {
+			if(property.getType().equals(tgtClass)) {
 				properties.add(property);
 			}
 		}
@@ -152,28 +150,26 @@ public final class Utilities {
 	 * @param array to search
 	 * @param key value to search for
 	 * @param keyFunc mapping function that turns array element into key
+	 * @param startAt start search from index {@code startAt}
 	 * @return index of array element if found or {@code array.length} otherwise
 	 */
-	public static <T,K> T linearSearch(final T[] data,final K key,final Function<T, K> keyFunc) {
-		for(final T value:data) {
-			if(Objects.equals(key, keyFunc.apply(value))) return value;
+	public static <T,K> Optional<T> linearSearch(final T[] data,final int startAt,final K key,final Function<T, K> keyFunc) {
+		for(int k=Math.max(startAt,0);k<data.length;k++) {
+			if(Objects.equals(key, keyFunc.apply(data[k]))) return Optional.ofNullable(data[k]);
 		}
-		return null;
+		return Optional.empty();
 	}
 	
-	public static <T,K> T linearSearch(final Iterable<T> data,final K key,final Function<T, K> keyFunc) {
-		for(final T value:data) {
-			if(Objects.equals(key, keyFunc.apply(value))) return value;
-		}
-		return null;
+	public static <T,K> Optional<T> linearSearch(final Iterable<T> data,final K key,final Function<T, K> keyFunc) {
+		return linearSearch(data.iterator(),key,keyFunc);
 	}
 	
-	public static <T,K> T linearSearch(final Iterator<T> iterator,final K key,final Function<T,K> keyFunc) {
+	public static <T,K> Optional<T> linearSearch(final Iterator<T> iterator,final K key,final Function<T,K> keyFunc) {
 		for(T value;iterator.hasNext();) {
 			value=iterator.next();
-			if(Objects.equals(key, keyFunc.apply(value))) return value;
+			if(Objects.equals(key, keyFunc.apply(value))) return Optional.ofNullable(value);
 		}
-		return null;
+		return Optional.empty();
 	}
 
 }

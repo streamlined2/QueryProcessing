@@ -1,8 +1,10 @@
 package query.definition;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.StringJoiner;
 
 import entity.definition.Entity;
@@ -48,4 +50,9 @@ public class EntryList implements Iterable<Entry<? extends Entity>> {
 	public Iterator<Entry<? extends Entity>> iterator() {
 		return entries.iterator();
 	}
+	
+	public final Set<Entry<? extends Entity>> getEntrySet(){
+		return new HashSet<>(entries);
+	}
+	
 }
