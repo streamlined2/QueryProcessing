@@ -1,12 +1,11 @@
 package entity.definition;
 
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import utils.Utilities;
+import query.definition.Entry;
 
 /**
  * Holds data for a set of entities
@@ -14,32 +13,41 @@ import utils.Utilities;
  * @author Serhii Pylypenko
  *
 */
-
-public class DataSource implements Iterable<EntitySource<? extends Entity>>{
+public class DataSource implements Iterable<Map.Entry<Class<? extends Entity>,EntitySource<? extends Entity>>>{
 	
-	private List<EntitySource<? extends Entity>> data=new LinkedList<>();
+	private Map<Class<? extends Entity>,EntitySource<? extends Entity>> data=new HashMap<>();
 	
-	@SuppressWarnings("unchecked")
+    @SafeVarargs
 	public DataSource(final EntitySource<? extends Entity>...sources) {
-		data.addAll(Arrays.asList(sources));
+		for(final EntitySource<? extends Entity> eSource:sources) {
+			data.put(eSource.getEntityClass(),eSource);
+		}
 	}
 	
-	public DataSource addSource(final EntitySource<? extends Entity> e) {
-		data.add(e);
+	public DataSource addSource(final EntitySource<? extends Entity> eSource) {
+		data.put(eSource.getEntityClass(), eSource);
 		return this;
 	}
 
 	@Override
-	public Iterator<EntitySource<? extends Entity>> iterator() {
-		return data.iterator();
+	public Iterator<Map.Entry<Class<? extends Entity>,EntitySource<? extends Entity>>> iterator() {
+		return data.entrySet().iterator();
 	}
 	
-	public boolean holdsDataFor(final Class<? extends Entity> entityClass) {
-		return !getDataFor(entityClass).isEmpty();
+	public boolean hasDataFor(final Entry<? extends Entity> entry) {
+		return hasDataFor(entry.getEntityClass());
+	}
+	
+	public boolean hasDataFor(final Class<? extends Entity> entityClass) {
+		return getDataFor(entityClass).isPresent();
+	}
+	
+	public Optional<EntitySource<? extends Entity>> getDataFor(final Entry<? extends Entity> entry){
+		return getDataFor(entry.getEntityClass());
 	}
 	
 	public Optional<EntitySource<? extends Entity>> getDataFor(final Class<? extends Entity> entityClass){
-		return Utilities.linearSearch(data, entityClass, (EntitySource<? extends Entity> x)->x.getEntityClass());
+		return Optional.ofNullable(data.get(entityClass));
 	}
-
+	
 }

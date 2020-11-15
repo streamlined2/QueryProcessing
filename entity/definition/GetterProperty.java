@@ -2,6 +2,7 @@ package entity.definition;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 /**
  * Holds getter reference to property of an entity
@@ -12,7 +13,7 @@ import java.lang.reflect.Method;
 *
  */
 
-public class GetterProperty<T extends Entity, R> implements Property<T, R> {
+public class GetterProperty<T extends Entity, R> implements Property<R> {
 	private final Method method;
 
 	public GetterProperty(final Class<T> entityClass,final String methodName) {
@@ -24,7 +25,7 @@ public class GetterProperty<T extends Entity, R> implements Property<T, R> {
 	}
 	
 	@SuppressWarnings("unchecked") @Override
-	public R getValue(final T entity) {
+	public R getValue(final Optional<? extends Entity> entity) {
 		try {
 			return (R) method.invoke(entity);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {

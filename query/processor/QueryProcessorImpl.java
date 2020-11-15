@@ -9,14 +9,15 @@ import query.definition.QueryResult;
  * @author Serhii Pylypenko
  *
  */
-public class QueryProcessorImpl implements QueryProcessor {
+public class QueryProcessorImpl extends AbstractQueryProcessor {
 
 	@Override
 	public QueryResult fetch(final Query query,final DataSource dataSource) throws QueryException {
 		final QueryResult result=new QueryResult();
 		
 		checkIfAllNecessaryDataSupplied(query,dataSource);
-		  //for() { result.add(new Tuple()); }
+		//for() { result.add(new Tuple()); }
+		//TODO implement rest of method
 		 
 		return result;
 	}

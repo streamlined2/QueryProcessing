@@ -37,7 +37,7 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 	}
 	
 	public <T extends Entity,R extends Entity> void join(
-			final Entry<T> entry,final Entry<R> dest,final Property<T,R> property) {
+			final Entry<T> entry,final Entry<R> dest,final Property<R> property) {
 		joints.register(entry, dest, property);
 	}
 	

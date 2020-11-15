@@ -1,7 +1,9 @@
 package entity.definition;
 
-public interface Property<T extends Entity,R> {
+import java.util.Optional;
 
-	public R getValue(final T entity);
+public interface Property<R> {
 
+	public R getValue(final Optional<? extends Entity> entity);
+	
 }

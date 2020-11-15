@@ -23,7 +23,7 @@ class PredicateList<T extends Entity> implements Iterable<Predicate<T>>{
 		return predicates.iterator();
 	}
 	
-	int size() {
+	public final int size() {
 		return predicates.size();
 	}
 	

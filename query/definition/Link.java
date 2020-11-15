@@ -1,5 +1,7 @@
 package query.definition;
 
+import java.util.Optional;
+
 import entity.definition.Entity;
 
 public class Link<T extends Entity,R extends Entity> {
@@ -16,6 +18,10 @@ public class Link<T extends Entity,R extends Entity> {
 
 	public final boolean pointsAt(final Entry<? extends Entity> target) {
 		return destination.equals(target);
+	}
+	
+	public Optional<R> getRelatedEntity(final Optional<? extends Entity> tupleEntity) {
+		return linkProperty.getRelatedEntity(tupleEntity);
 	}
 	
 }

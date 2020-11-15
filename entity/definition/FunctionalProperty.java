@@ -1,5 +1,6 @@
 package entity.definition;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -11,16 +12,16 @@ import java.util.function.Function;
  *
  */
 
-public class FunctionalProperty<T extends Entity,R> implements Property<T,R>{
+public class FunctionalProperty<T extends Entity,R> implements Property<R>{
 	private final Function<T,R> methodReference;
 	
 	public FunctionalProperty(final Function<T,R> methodReference){
 		this.methodReference=methodReference;
 	}
 	
-	@Override
-	public R getValue(final T entity) {
-		return methodReference.apply(entity);
+	@SuppressWarnings("unchecked") @Override
+	public R getValue(final Optional<? extends Entity> entity) {
+		return methodReference.apply((T)entity.get());
 	}
 	
 	@Override public int hashCode() {

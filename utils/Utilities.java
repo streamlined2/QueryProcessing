@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 import entity.definition.Entity;
@@ -33,11 +34,10 @@ public final class Utilities {
 	 * @param tgtClass entity type referred to
 	 * @return set of suitable properties of type {@code target}
 	 */
-	public static Set<ObjectStreamField> getRelations(final Class<? extends Entity> srcClass,final Class<? extends Entity> tgtClass) {
-		final ObjectStreamField[] fields=getSerializableFields(srcClass);
+	public static Set<ObjectStreamField> getEntityRelations(final Class<? extends Entity> srcClass,final Class<? extends Entity> tgtClass) {
 		final Set<ObjectStreamField> properties=new HashSet<>();
-		for(final ObjectStreamField property:fields) {
-			if(property.getType().equals(tgtClass)) {
+		for(final ObjectStreamField property:getSerializableFields(srcClass)) {
+			if(tgtClass.isAssignableFrom(property.getType())) {
 				properties.add(property);
 			}
 		}
@@ -71,8 +71,8 @@ public final class Utilities {
 		if(a!=null && b!=null) {
 			final Object[] aFields=evaluateFields(a);
 			final Object[] bFields=evaluateFields(b);
-			boolean equal=true;
-			for(int k=0;equal && k<Math.min(aFields.length, bFields.length);k++) {
+			boolean equal=(aFields.length==bFields.length);
+			for(int k=0;equal && k<aFields.length;k++) {
 				equal=equal && Objects.equals(aFields[k], bFields[k]);
 			}
 			return equal;
@@ -122,7 +122,7 @@ public final class Utilities {
 	 */
 	public static <T extends Serializable> ObjectStreamField[] getSerializableFields(final Class<T> cl) {
 		final ObjectStreamClass osc=ObjectStreamClass.lookup(cl);
-		return osc==null? new ObjectStreamField[0]: osc.getFields();
+		return osc==null? new ObjectStreamField[0]: osc.getFields();//excessive check, should never be 'null'
 	}
 	
 	/**
@@ -168,6 +168,18 @@ public final class Utilities {
 		for(T value;iterator.hasNext();) {
 			value=iterator.next();
 			if(Objects.equals(key, keyFunc.apply(value))) return Optional.ofNullable(value);
+		}
+		return Optional.empty();
+	}
+	
+	public static <T,K> Optional<T> linearSearch(final Iterable<T> data,final K key,final BiPredicate<T, K> check) {
+		return linearSearch(data.iterator(),key,check);
+	}
+	
+	public static <T,K> Optional<T> linearSearch(final Iterator<T> iterator,final K key,final BiPredicate<T,K> check){
+		for(T value;iterator.hasNext();) {
+			value=iterator.next();
+			if(check.test(value,key)) return Optional.ofNullable(value);
 		}
 		return Optional.empty();
 	}

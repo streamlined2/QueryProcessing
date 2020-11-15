@@ -42,7 +42,7 @@ public class Entry<T extends Entity> {
 		return predicates.size();
 	}
 	
-	public <R extends Entity> void  joinOn(final Entry<R> dest,final Property<T,R> property) {
+	public <R extends Entity> void  joinOn(final Entry<R> dest,final Property<R> property) {
 		query.join(this,dest,property);
 	}
 	
@@ -51,7 +51,7 @@ public class Entry<T extends Entity> {
 		predicates.addAll(Arrays.asList(addPredicates));
 	}
 			
-	boolean validate(final T entity) {
+	public boolean validate(final T entity) {
 		boolean valid=true;
 		for(final Predicate<T> p:predicates) {
 			valid=valid && p.test(entity);
@@ -61,7 +61,7 @@ public class Entry<T extends Entity> {
 	
 	String predicateClause() {
 		final StringJoiner joiner=new StringJoiner(" and ");
-		predicates.forEach((Predicate<T> x)->joiner.add(x.toString()));
+		predicates.forEach((Predicate<? extends Entity> x)->joiner.add(x.toString()));
 		return joiner.toString();
 	}
 	

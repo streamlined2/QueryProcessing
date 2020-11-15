@@ -1,6 +1,11 @@
 package entity.definition;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Entity data class holder
@@ -11,30 +16,26 @@ import java.util.Iterator;
 
 public class EntitySource<T extends Entity> implements Iterable<T> {
 	
-	private final Iterator<T> iterator;
 	private final Class<T> entityClass;
+	private final SortedSet<T> data=new TreeSet<>();//HashSet //rare modifications expected, optimized for search 
 
+	@SuppressWarnings("unchecked")
 	@SafeVarargs
-	public EntitySource(final T... data) {
-		entityClass=(Class<T>) data.getClass().getComponentType();
-		this.iterator=new Iterator<T>() {
-			private int index=0;
-
-			@Override
-			public boolean hasNext() {
-				return index<data.length;
-			}
-
-			@Override
-			public T next() {
-				return data[index++];
-			}			
-		};
+	public EntitySource(final T... source) {
+		entityClass=(Class<T>) source.getClass().getComponentType();
+		data.addAll(Arrays.asList(source));
+		/*
+		 * for(final T src:source) { data.add(src); }
+		 */
 	}
 	
-	public EntitySource(final Class<T> cl,final Iterator<T> iterator) {
-		entityClass=cl;
-		this.iterator=iterator;
+	//the passed entity is suitable for this entity source
+	public boolean suitable(final Entity entity) {
+		return getEntityClass().isAssignableFrom(entity.getClass());
+	}
+	
+	public boolean contains(final T entity) {
+		return data.contains(entity);
 	}
 	
 	public Class<T> getEntityClass(){
@@ -43,7 +44,11 @@ public class EntitySource<T extends Entity> implements Iterable<T> {
 
 	@Override
 	public Iterator<T> iterator() {
-		return iterator;
+		return data.iterator();
+	}
+	
+	public Set<T> getData(){
+		return Collections.unmodifiableSet(data);
 	}
 	
 }

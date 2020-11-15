@@ -1,6 +1,7 @@
 package query.definition;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 import entity.definition.Entity;
@@ -10,9 +11,9 @@ import entity.definition.Property;
 
 public class QualifiedProperty<T extends Entity,R> {
 	private final Entry<T> entry;
-	private final Property<T,R> property;
+	private final Property<R> property;
 	
-	public QualifiedProperty(final Entry<T> entry,final Property<T,R> property) {
+	public QualifiedProperty(final Entry<T> entry,final Property<R> property) {
 		this.entry=entry;
 		this.property=property;
 	}
@@ -26,7 +27,11 @@ public class QualifiedProperty<T extends Entity,R> {
 	}
 	
 	public Entry<T> getEntry() { return entry;}
-	public Property<T,R> getProperty() { return property;}
+	public Property<R> getProperty() { return property;}
+	
+	public Optional<R> getRelatedEntity(final Optional<? extends Entity> source) {
+		return Optional.ofNullable(property.getValue(source));
+	}
 	
 	@Override public String toString() {
 		return new StringBuilder().
