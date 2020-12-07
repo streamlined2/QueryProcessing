@@ -3,6 +3,7 @@ package entity.definition;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -30,8 +31,9 @@ public class EntitySource<T extends Entity> implements Iterable<T> {
 	}
 	
 	//the passed entity is suitable for this entity source
-	public boolean suitable(final Entity entity) {
-		return getEntityClass().isAssignableFrom(entity.getClass());
+	public boolean suitable(final Optional<? extends Entity> entity) {
+		assert entity.isPresent();
+		return getEntityClass().isAssignableFrom(entity.get().getClass());
 	}
 	
 	public boolean contains(final T entity) {

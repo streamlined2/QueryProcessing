@@ -14,7 +14,7 @@ import java.util.StringJoiner;
 public class QueryResult implements Iterable<Tuple> {
 	private final List<Tuple> tuples=new LinkedList<>();
 	
-	void add(final Tuple e) {
+	public void add(final Tuple e) {
 		tuples.add(e);
 	}
 	

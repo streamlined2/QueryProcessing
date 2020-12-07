@@ -4,9 +4,9 @@ import entity.definition.DataSource;
 import entity.definition.EntitySource;
 import query.definition.Query;
 import query.definition.QueryResult;
-import query.processor.QueryException;
+import query.exceptions.QueryException;
 import query.processor.QueryProcessor;
-import query.processor.QueryProcessorImpl;
+import query.processor.BasicQueryProcessor;
 import query.definition.Entry;
 
 public class Runner {
@@ -30,8 +30,8 @@ public class Runner {
 		persons.select(Person::firstname,Person::lastname);
 		System.out.println(q1);
 		
-		QueryProcessor processor=new QueryProcessorImpl();
-		QueryResult rst=processor.fetch(q1,data);
+		QueryProcessor processor=new BasicQueryProcessor(q1);
+		QueryResult rst=processor.fetch(data);
 		System.out.printf("Query #1: %s\n",rst);
 		
 		

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.StringJoiner;
 
 import entity.definition.Entity;
+import utils.FilteredIterator;
 
 class PropertyList implements Iterable<QualifiedProperty<? extends Entity,?>>{
 	private List<QualifiedProperty<? extends Entity,?>> properties=new LinkedList<>();
@@ -31,34 +32,17 @@ class PropertyList implements Iterable<QualifiedProperty<? extends Entity,?>>{
 		return properties.iterator();
 	}
 	
-	public Iterator<QualifiedProperty<? extends Entity,?>> iterator(final Entry<? extends Entity> entry){
-		return new Iterator<QualifiedProperty<? extends Entity,?>>() {
-			
-			private Iterator<QualifiedProperty<? extends Entity,?>> iterator=iterator();
-			private QualifiedProperty<? extends Entity,?> stash=null;
-			
-			private QualifiedProperty<? extends Entity,?> findNext() {
-				while(iterator.hasNext()) {
-					final QualifiedProperty<? extends Entity,?> nextOne=iterator.next();
-					if(nextOne.getEntry().equals(entry)) return nextOne;
-				}
-				return null;
-			}
-			
-			@Override
-			public boolean hasNext() {
-				return (stash=findNext())!=null;
-			}
-
-			@Override
-			public QualifiedProperty<? extends Entity,?> next() {
-				return stash;
-			}
-			
-		};
+	public FilteredIterator<QualifiedProperty<? extends Entity,?>,Entry<? extends Entity>> iterator(final Entry<? extends Entity> entry){
+		return new FilteredIterator<QualifiedProperty<? extends Entity,?>,Entry<? extends Entity>>(
+				iterator(),(p,e)->p.getEntry().equals(e),entry);
 	}
 
 	public boolean empty() {
 		return properties.isEmpty();
-	}		
+	}
+	
+	public int size() {
+		return properties.size();
+	}
+	
 }

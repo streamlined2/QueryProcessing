@@ -10,16 +10,16 @@ import java.util.StringJoiner;
  *
  */
 
-class Tuple {
+public class Tuple {
 	
 	private final List<Object> values;
 	
-	Tuple(final int dimension){
+	public Tuple(final int dimension){
 		values=new ArrayList<>(dimension);
 	}
 	
-	void add(final Object value) {
-		values.add(value);
+	public void set(final int index,final Object value) {
+		values.set(index, value);
 	}
 	
 	@Override public int hashCode() {

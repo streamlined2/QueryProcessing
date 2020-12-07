@@ -4,6 +4,8 @@ import query.definition.Query;
 import entity.definition.DataSource;
 import query.definition.Entry;
 import query.definition.QueryResult;
+import query.exceptions.NoDataException;
+import query.exceptions.QueryException;
 
 /**
  * Query processor interface
@@ -13,10 +15,12 @@ import query.definition.QueryResult;
 
 public interface QueryProcessor {
 	
-	public QueryResult fetch(final Query query,final DataSource dataSource) throws QueryException;
+	public Query getQuery();
 	
-	public default void checkIfAllNecessaryDataSupplied(final Query query,final DataSource dataSource) throws NoDataException {
-		for(final Entry<?> entry:query) {
+	public QueryResult fetch(final DataSource dataSource) throws QueryException;
+	
+	public default void checkIfAllNecessaryDataSupplied(final DataSource dataSource) throws NoDataException {
+		for(final Entry<?> entry:getQuery()) {
 			if(!dataSource.hasDataFor(entry)) 
 				throw new NoDataException(entry.getEntityClass(),dataSource);
 		}
