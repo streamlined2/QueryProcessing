@@ -30,7 +30,9 @@ public class QualifiedProperty<T extends Entity,R> {
 	public Property<R> getProperty() { return property;}
 	
 	public Optional<R> getRelatedEntity(final Optional<? extends Entity> source) {
-		return Optional.ofNullable(property.getValue(source));
+		return property==null?
+				Optional.empty():
+					Optional.ofNullable(property.getValue(source));
 	}
 	
 	@Override public String toString() {

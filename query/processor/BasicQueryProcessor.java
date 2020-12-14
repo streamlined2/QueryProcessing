@@ -29,7 +29,7 @@ public class BasicQueryProcessor extends AbstractQueryProcessor {
 
 		//find entitySource for initial entity of relation list
 		final var initialEntitySource=dataSource.getDataFor(
-														getInitialLink().getSourceProperty().getEntry());
+														getInitialLink().getSource());
 
 		if(initialEntitySource.isPresent()) {
 			for(var initialTupleEntity:initialEntitySource.get()) {

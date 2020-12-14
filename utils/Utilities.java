@@ -106,6 +106,7 @@ public final class Utilities {
 			int k=0;
 			for(final ObjectStreamField field:fields) {
 				final Field fieldRef=obj.getClass().getDeclaredField(field.getName());
+				fieldRef.setAccessible(true);
 				values[k++]=fieldRef.get(obj);
 			}
 			return values;

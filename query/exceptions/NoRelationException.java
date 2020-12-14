@@ -16,7 +16,7 @@ public class NoRelationException extends QueryException {
 	public NoRelationException(
 			final Link<? extends Entity,? extends Entity> src,
 			final Link<? extends Entity,? extends Entity> dst){
-		super(String.format("can't establish relation between entities %s and %s", src.getSourceProperty().getEntry(), dst.getSourceProperty().getEntry()));
+		super(String.format("can't establish relation between entities %s and %s", src.getSource(), dst.getSource()));
 	}
 }
 

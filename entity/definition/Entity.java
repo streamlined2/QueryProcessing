@@ -1,6 +1,7 @@
 package entity.definition;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
  * Basic class for every entity
@@ -9,7 +10,7 @@ import java.io.Serializable;
  */
 
 @SuppressWarnings("serial")
-public abstract class Entity implements Serializable, Cloneable {
+public abstract class Entity implements Serializable, Cloneable, Comparable<Entity> {
 	
 	@Override
 	public String toString() {
@@ -31,6 +32,18 @@ public abstract class Entity implements Serializable, Cloneable {
 	@Override
 	public Entity clone() {
 		return utils.Utilities.clone(this);
+	}
+	
+	protected StringBuilder getKey(){
+		final Object[] values=utils.Utilities.evaluateFields(this);//values of serializable fields
+		final StringBuilder b=new StringBuilder();
+		Arrays.asList(values).forEach(x->b.append(x.toString()));
+		return b;
+	}
+	
+	@Override
+	public int compareTo(final Entity entity) {
+		return getKey().compareTo(entity.getKey());
 	}
 	
 	@Override

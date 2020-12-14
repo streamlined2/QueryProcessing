@@ -1,6 +1,7 @@
 package query.processor;
 
 import java.io.ObjectStreamField;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Optional;
@@ -29,6 +30,7 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 	
 	public AbstractQueryProcessor(final Query query) throws QueryException {
 		this.query=query;
+		buildListOfRelations();
 	}
 	
 	@Override public final Query getQuery() {
@@ -51,8 +53,8 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 	 */
 	protected void buildListOfRelations() throws QueryException {
 		final Set<Entry<? extends Entity>> nodeSet=query.getEntries();
-		while(!nodeSet.isEmpty()) {//fetch fragment of nodes and prepend it to resulting list of nodes 'links' until 'nodeSet' is not empty 
-			prependFragment(
+		while(!nodeSet.isEmpty()) {//fetch fragment of nodes and prepend it to resulting list of nodes 'relations' until 'nodeSet' is not empty 
+			mergeFragment(
 					nodeSet,getNextFragment(nodeSet));
 		}
 	}
@@ -62,33 +64,49 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 			final Set<Entry<? extends Entity>> nodeSet) throws QueryException {
 		
 		final Deque<Link<? extends Entity,? extends Entity>> fragment=new LinkedList<>();
+		Entry<? extends Entity> firstNode=nodeSet.iterator().next();
 		do {
-			final Entry<? extends Entity> firstNode=nodeSet.iterator().next();
 			nodeSet.remove(firstNode);
-			final Optional<Link<? extends Entity,? extends Entity>> link=selectRelation(nodeSet, firstNode);
-			if(link.isPresent()) {
-				fragment.add(link.get());
-			}else {
-				break;//can't find next node, break loop 
+			if(nodeSet.isEmpty()) {//last node extracted
+				fragment.add(new Link<>(firstNode)); 
+			}else {//find relation between 'firstNode' and rest of node set
+				final Optional<Link<? extends Entity,? extends Entity>> link=selectRelation(nodeSet, firstNode);
+				if(link.isPresent()) {
+					fragment.add(link.get());
+					firstNode=link.get().getDestination();
+				}else {
+					break; 
+				}
 			}
 		}while(!nodeSet.isEmpty());
 		return fragment;
 	}
 	
-	//build new list of links by prepending items of 'fragment' from start to previously accumulated nodes 'links'
-	private void prependFragment(
+	//build new list of links by prepending items of 'fragment' from start to previously accumulated nodes 'relations'
+	private void mergeFragment(
 			final Set<Entry<? extends Entity>> nodeSet,
 			final Deque<Link<? extends Entity,? extends Entity>> fragment) throws QueryException 
 	{
-		final Optional<Link<? extends Entity,? extends Entity>> relation=
-				selectRelation(nodeSet,fragment.getLast().getSourceProperty().getEntry());//get relation from last node of 'fragment' to some other node
-		if(relation.isPresent() && relation.get().pointsAt(relations.getFirst().getSourceProperty().getEntry())) {//if found relation points at first node of 'links'
-			while(!fragment.isEmpty()) {//fetch nodes from tail of 'fragment' and prepend them to 'links'
-				relations.addFirst(fragment.removeLast());
-			}
+		if(relations.isEmpty()) {
+			prependFragment(fragment);
 		}else {
-			throw new NoRelationException(fragment.getLast(), relations.getFirst());//no relation can be established between last node of 'fragment' and first node of 'links'
+			final var relation=
+					selectRelation(
+							Collections.singleton(relations.getFirst().getSource()),
+							fragment.getLast().getSource());//get relation from last node of 'fragment' to first node of 'relations' if not empty
+			if(relation.isPresent()) {//if found relation points at first node of 'relations'
+				prependFragment(fragment);
+			}else {
+				throw new NoRelationException(fragment.getLast(), relations.getFirst());//no relation can be established between last node of 'fragment' and first node of 'relations'
+			}
 		}
+	}
+	
+	//fetch nodes from tail of 'fragment' and prepend them to 'relations'
+	private void prependFragment(final Deque<Link<? extends Entity,? extends Entity>> fragment) {
+		while(!fragment.isEmpty()) {
+			relations.addFirst(fragment.removeLast());
+		}		
 	}
 
 	/**
@@ -99,29 +117,27 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 	 */
 	protected Optional<Link<? extends Entity,? extends Entity>> selectRelation(
 			final Set<Entry<? extends Entity>> nodeSet,
-			final Entry<? extends Entity> source)
-	throws NoRelationException {
+			final Entry<? extends Entity> source) {
 		
 		final var link=query.getLink(source);//Optional<Link<? extends Entity,? extends Entity>>
 		if(link.isPresent()) {//found relation in Query.joints
 			return Optional.of(link.get());
 		}else {
-			final Set<ObjectStreamField> entityRelations=Utilities.getEntityRelations(//fetch list of relations by inspecting 'source'
+			final Set<ObjectStreamField> entityReferences=Utilities.getEntityRelations(//fetch list of relations by inspecting 'source'
 					source.getEntityClass(), 
 					Entity.class);
-			for(final ObjectStreamField relation:entityRelations) {
+			for(final ObjectStreamField entityRef:entityReferences) {
 				final var node=Utilities.linearSearch(//get first relation that points to any unresolved node in 'nodeSet' //Optional<Entry<? extends Entity>>
-						nodeSet, relation.getType(), 
+						nodeSet, entityRef.getType(), 
 						(Entry<? extends Entity> entry,Class<?> entityType)->entry.getEntityClass().isAssignableFrom(entityType));
 				if(node.isPresent()) {
 					return Optional.of(//return first link pointing at still unresolved node from 'nodeSet'
 							new Link<>(
 									node.get(),
-									new QualifiedProperty<>(source, relation.getName())));
+									new QualifiedProperty<>(source, entityRef.getName())));
 				}
 			}
-			//no relation found between 'source' and 'target' entries
-			throw new NoRelationException(source);
+			return Optional.empty();//no relation found from 'source' to any of 'nodeSet' entries
 		}
 	}
 	
@@ -140,7 +156,7 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 	
 				do {
 					final var link=relationIterator.next();////get next relation link //Link<? extends Entity,? extends Entity>
-					final var sourceEntry=link.getSourceProperty().getEntry();
+					final var sourceEntry=link.getSource();
 					final var entitySource=dataSource.getDataFor(sourceEntry);//Optional<EntitySource<? extends Entity>>
 					
 					if(entitySource.isPresent()) {

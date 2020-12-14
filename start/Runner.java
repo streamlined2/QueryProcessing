@@ -23,16 +23,13 @@ public class Runner {
 		
 		Query q1=new Query();
 		Entry<Person> persons=q1.addEntry(Person.class);
-		/*
-		q1.select(
-				new QualifiedProperty<Person,String>((Entry<Person>)q1.getEntry(0),func));*/
-		//persons.select(Person::firstname).select(Person::lastname);
-		persons.select(Person::firstname,Person::lastname);
+
+		persons.select(Person::firstname,Person::lastname,Person::age,Person::sex);
 		System.out.println(q1);
 		
 		QueryProcessor processor=new BasicQueryProcessor(q1);
 		QueryResult rst=processor.fetch(data);
-		System.out.printf("Query #1: %s\n",rst);
+		System.out.printf("Query #1: \n%s\n",rst);
 		
 		
 	}

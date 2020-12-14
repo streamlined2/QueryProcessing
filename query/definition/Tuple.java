@@ -1,7 +1,6 @@
 package query.definition;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.StringJoiner;
 
 /**
@@ -12,14 +11,14 @@ import java.util.StringJoiner;
 
 public class Tuple {
 	
-	private final List<Object> values;
+	private final Object[] values;
 	
 	public Tuple(final int dimension){
-		values=new ArrayList<>(dimension);
+		values=new Object[dimension];
 	}
 	
 	public void set(final int index,final Object value) {
-		values.set(index, value);
+		values[index]=value;
 	}
 	
 	@Override public int hashCode() {
@@ -33,7 +32,7 @@ public class Tuple {
 	@Override
 	public String toString() {
 		StringJoiner joiner=new StringJoiner(",","[","]");
-		values.forEach(x->joiner.add(x.toString()));
+		Arrays.asList(values).forEach(x->joiner.add(x.toString()));
 		return joiner.toString();
 	}
 
