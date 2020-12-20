@@ -26,7 +26,7 @@ public class Tuple {
 	}
 	
 	@Override public boolean equals(final Object o) {
-		return (o instanceof Tuple)?values.equals(((Tuple)o).values):false;
+		return (o instanceof Tuple tuple)?values.equals(tuple.values):false;
 	}
 	
 	@Override

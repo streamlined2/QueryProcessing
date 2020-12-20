@@ -30,7 +30,8 @@ public class FunctionalProperty<T extends Entity,R> implements Property<R>{
 	
 	@SuppressWarnings("unchecked")
 	@Override public boolean equals(final Object o) {
-		return (o instanceof FunctionalProperty) ? methodReference.equals(((FunctionalProperty<T,R>)o).methodReference):false;
+		return (o instanceof FunctionalProperty prop) ? 
+				methodReference.equals(prop.methodReference):false;
 	}
 	
 	@Override public String toString() {

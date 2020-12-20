@@ -2,6 +2,7 @@ package entity.definition;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
@@ -27,15 +28,19 @@ public class GetterProperty<T extends Entity, R> implements Property<R> {
 	@SuppressWarnings("unchecked") @Override
 	public R getValue(final Optional<? extends Entity> entity) {
 		try {
-			return (R) method.invoke(entity);
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			return (R) method.invoke(entity.get());
+		} catch (
+				NoSuchElementException | 
+				IllegalArgumentException | 
+				InvocationTargetException | 
+				IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	@SuppressWarnings("unchecked") @Override 
 	public boolean equals(final Object o) {
-		return (o instanceof GetterProperty) ? method.equals(((GetterProperty<T,R>)o).method):false;
+		return (o instanceof GetterProperty prop) ? method.equals(prop.method):false;
 	}
 	
 	@Override public int hashCode() {

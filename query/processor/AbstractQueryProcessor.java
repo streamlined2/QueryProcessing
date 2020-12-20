@@ -64,21 +64,27 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 			final Set<Entry<? extends Entity>> nodeSet) throws QueryException {
 		
 		final Deque<Link<? extends Entity,? extends Entity>> fragment=new LinkedList<>();
-		Entry<? extends Entity> firstNode=nodeSet.iterator().next();
-		do {
+		
+		final var i=nodeSet.iterator();
+		Entry<? extends Entity> firstNode;
+		Optional<Link<? extends Entity,? extends Entity>> link;
+		do {//skip nodes that do not refer to another node
+			firstNode=i.next();
+			link=selectRelation(nodeSet, firstNode);
+		}while(!link.isPresent() && i.hasNext());
+		
+		while(link.isPresent()) {
+			fragment.add(link.get());
 			nodeSet.remove(firstNode);
-			if(nodeSet.isEmpty()) {//last node extracted
-				fragment.add(new Link<>(firstNode)); 
-			}else {//find relation between 'firstNode' and rest of node set
-				final Optional<Link<? extends Entity,? extends Entity>> link=selectRelation(nodeSet, firstNode);
-				if(link.isPresent()) {
-					fragment.add(link.get());
-					firstNode=link.get().getDestination();
-				}else {
-					break; 
-				}
-			}
-		}while(!nodeSet.isEmpty());
+			firstNode=link.get().getDestination();
+			link=selectRelation(nodeSet, firstNode);
+		}
+	
+		if(nodeSet.size()==1) {//last node
+			fragment.add(new Link<>(firstNode)); 
+			nodeSet.remove(firstNode);
+		}
+
 		return fragment;
 	}
 	

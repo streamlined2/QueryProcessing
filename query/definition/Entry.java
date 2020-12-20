@@ -71,8 +71,8 @@ public class Entry<T extends Entity> {
 	
 	@SuppressWarnings("unchecked")
 	@Override public boolean equals(final Object o) {
-		return (o instanceof Entry)?
-				entityClass.equals(((Entry<T>)o).entityClass):false;
+		return (o instanceof Entry entry)?
+				entityClass.equals(entry.entityClass):false;
 	}
 	
 	@Override public String toString() {

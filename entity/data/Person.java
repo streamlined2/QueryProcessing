@@ -18,11 +18,15 @@ public class Person extends Entity {
 	private Sex sex;
 	public Sex sex() { return sex;}
 	
-	public Person(final String firstname,final String lastname,final int age,final Sex sex) {
+	private Location location;
+	public Location location() { return location;}
+	
+	public Person(final String firstname,final String lastname,final int age,final Sex sex,final Location location) {
 		this.firstname=firstname;
 		this.lastname=lastname;
 		this.age=age;
 		this.sex=sex;
+		this.location=location;
 	}	
 
 }
