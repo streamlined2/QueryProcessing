@@ -9,12 +9,21 @@ import java.util.StringJoiner;
  *
  */
 
-public class Tuple {
+public class Tuple implements Comparable<Tuple>{
 	
 	private final Object[] values;
+	private Comparable<? super Comparable<?>> orderKey;
 	
 	public Tuple(final int dimension){
-		values=new Object[dimension];
+		this.values=new Object[dimension];
+	}
+	
+	public void setOrderKey(final Comparable<? super Comparable<?>> orderKey) {
+		this.orderKey=orderKey;		
+	}
+	
+	public Comparable<? super Comparable<?>> getOrderKey(){
+		return orderKey;
 	}
 	
 	public void set(final int index,final Object value) {
@@ -22,11 +31,12 @@ public class Tuple {
 	}
 	
 	@Override public int hashCode() {
-		return values.hashCode();
+		return orderKey.hashCode();
 	}
 	
 	@Override public boolean equals(final Object o) {
-		return (o instanceof Tuple tuple)?values.equals(tuple.values):false;
+		return o instanceof Tuple tuple?
+				orderKey.equals(tuple.orderKey):false;
 	}
 	
 	@Override
@@ -34,6 +44,11 @@ public class Tuple {
 		StringJoiner joiner=new StringJoiner(",","[","]");
 		Arrays.asList(values).forEach(x->joiner.add(x.toString()));
 		return joiner.toString();
+	}
+
+	@Override
+	public int compareTo(Tuple o) {
+		return orderKey.compareTo(o.orderKey);
 	}
 
 }

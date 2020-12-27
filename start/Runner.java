@@ -1,9 +1,9 @@
 package start;
 import java.time.Year;
 
-import entity.data.Country;
-import entity.data.Location;
-import entity.data.Person;
+import entity.beans.Country;
+import entity.beans.Location;
+import entity.beans.Person;
 import entity.definition.DataSource;
 import entity.definition.EntitySource;
 import query.definition.Query;
@@ -18,6 +18,7 @@ public class Runner {
 	@SuppressWarnings("unchecked")
 	public static void main(final String... args) throws QueryException {
 		
+		//define source data
 		final EntitySource<Country> countries=new EntitySource<>(
 				new Country("USA",9833520D,328239523),
 				new Country("UK",242495D,67886004),
@@ -40,14 +41,27 @@ public class Runner {
 				countries,locations,persons
 		);
 		
+		//define query and its components
 		final Query q1=new Query();
+		//define data entries for each entity bean
 		final Entry<Person> personEntry=q1.addEntry(Person.class);
 		final Entry<Location> locationEntry=q1.addEntry(Location.class);
 		final Entry<Country> countryEntry=q1.addEntry(Country.class);
+		//define select properties
+		countryEntry.select(Country::name);
+		locationEntry.select(Location::name);
+		personEntry.select(Person::lastname,Person::firstname,Person::age,Person::sex);
+		locationEntry.select(Location::founded);
+		countryEntry.select(Country::population);
+		//define sort by properties
+		countryEntry.sortBy(Country::name);
+		locationEntry.sortBy(Location::name);
+		personEntry.sortBy(Person::lastname,Person::firstname);
+		//define filter conditions
+		//countryEntry.where((Country c)->c.name().equals("USA"));
+		//locationEntry.where((Location loc)->loc.name().startsWith("W"));
+		personEntry.where((Person p)->p.firstname().startsWith("J"));
 
-		personEntry.select(Person::firstname,Person::lastname,Person::age,Person::sex);
-		locationEntry.select(Location::name,Location::founded);
-		countryEntry.select(Country::name,Country::population);
 		//System.out.println(q1);
 		
 		QueryProcessor processor=new BasicQueryProcessor(q1);

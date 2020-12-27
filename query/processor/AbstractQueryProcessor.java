@@ -1,6 +1,7 @@
 package query.processor;
 
 import java.io.ObjectStreamField;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -8,8 +9,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
+import collections.Searcher;
 import entity.definition.DataSource;
 import entity.definition.Entity;
+import entity.definition.EntityInspector;
 import query.definition.Entry;
 import query.definition.Link;
 import query.definition.QualifiedProperty;
@@ -21,7 +24,6 @@ import query.exceptions.NoRelationException;
 import query.exceptions.QueryException;
 import query.exceptions.WrongInitialEntityClassException;
 import query.definition.Tuple;
-import utils.Utilities;
 
 public abstract class AbstractQueryProcessor implements QueryProcessor {
 
@@ -30,7 +32,6 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 	
 	public AbstractQueryProcessor(final Query query) throws QueryException {
 		this.query=query;
-		buildListOfRelations();
 	}
 	
 	@Override public final Query getQuery() {
@@ -129,11 +130,11 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 		if(link.isPresent()) {//found relation in Query.joints
 			return Optional.of(link.get());
 		}else {
-			final Set<ObjectStreamField> entityReferences=Utilities.getEntityRelations(//fetch list of relations by inspecting 'source'
+			final Set<ObjectStreamField> entityReferences=EntityInspector.getEntityRelations(//fetch list of relations by inspecting 'source'
 					source.getEntityClass(), 
 					Entity.class);
 			for(final ObjectStreamField entityRef:entityReferences) {
-				final var node=Utilities.linearSearch(//get first relation that points to any unresolved node in 'nodeSet' //Optional<Entry<? extends Entity>>
+				final var node=Searcher.linearSearch(//get first relation that points to any unresolved node in 'nodeSet' //Optional<Entry<? extends Entity>>
 						nodeSet, entityRef.getType(), 
 						(Entry<? extends Entity> entry,Class<?> entityType)->entry.getEntityClass().isAssignableFrom(entityType));
 				if(node.isPresent()) {
@@ -213,7 +214,7 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 			tuple=new Tuple(dimension);
 		}
 
-		public Tuple getTuple() {
+		Tuple getTuple() {
 			return tuple;
 		}
 		
@@ -235,9 +236,47 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 			final Optional<? extends Entity> initialTupleEntity,
 			final DataSource dataSource) 
 	throws QueryException {
-		final var visitor=new CollectTupleDataVisitor(getQuery().dimension());
+		final var visitor=new CollectTupleDataVisitor(getQuery().selectDimension());
 		enumerateTupleEntities(initialTupleEntity, dataSource, visitor);
 		return visitor.getTuple();
+	}
+	
+	private class ComposeOrderKeyVisitor<T extends Entity> implements BiConsumer<Optional<T>,Entry<T>>{
+		
+		private final Object keys[];
+		
+		ComposeOrderKeyVisitor(final int dimension){
+			keys=new Object[dimension];
+		}
+
+		Comparable<?> getOrderKey() {
+			final StringBuilder orderKey=new StringBuilder();
+			Arrays.asList(keys).forEach(x->orderKey.append(x));
+			return orderKey;
+		}
+		
+		@Override
+		//extract values of given entity/entry and compose them as sort key
+		public void accept(final Optional<T> entity, final Entry<T> entry) {
+			for(var i=getQuery().sortByIterator(entry);i.hasNext();) {//scan entity properties for 'entry'
+				//evaluate property of entity and store value as part of future sort key
+				final var property=i.next();
+				final int index=i.nextIndex();
+				keys[index]=property.getProperty().getValue(entity);
+			};
+			
+		}
+		
+	}
+	
+	//constructs visitor and passes it to compose sort key for every tuple
+	protected Comparable<? super Comparable<?>> composeOrderKey(
+			final Optional<? extends Entity> initialTupleEntity,
+			final DataSource dataSource) 
+	throws QueryException {
+		final var visitor=new ComposeOrderKeyVisitor(getQuery().sortByDimension());
+		enumerateTupleEntities(initialTupleEntity, dataSource, visitor);
+		return visitor.getOrderKey();
 	}
 	
 }

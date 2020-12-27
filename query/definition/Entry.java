@@ -22,10 +22,18 @@ public class Entry<T extends Entity> {
 		predicates=new PredicateList<T>();
 	}
 	
-	@SuppressWarnings("unchecked")
-	public <R> Entry<T> select(final Function<T,R>... getters) {
+	public <R> Entry<T> select(
+			@SuppressWarnings("unchecked") final Function<T,R>... getters) {
 		for(final Function<T,R> getter:getters) {
 			query.select(new QualifiedProperty<T,R>(this,getter));
+		}
+		return this;
+	}
+	
+	public <R> Entry<T> sortBy(
+			@SuppressWarnings("unchecked") final Function<T,R>... getters){
+		for(final var getter:getters) {
+			query.sortBy(new QualifiedProperty<T, R>(this, getter));
 		}
 		return this;
 	}
@@ -46,8 +54,8 @@ public class Entry<T extends Entity> {
 		query.join(this,dest,property);
 	}
 	
-	@SafeVarargs
-	final void where(final Predicate<T>...addPredicates) {
+	public void where(
+			@SuppressWarnings("unchecked") final Predicate<T>...addPredicates) {
 		predicates.addAll(Arrays.asList(addPredicates));
 	}
 			

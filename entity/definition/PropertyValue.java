@@ -1,7 +1,5 @@
 package entity.definition;
 
-import java.util.Objects;
-
 public class PropertyValue<R> {
 	
 	private final Property<R> property;
@@ -21,7 +19,7 @@ public class PropertyValue<R> {
 	}
 	
 	@Override public int hashCode() {
-		return Objects.hash(property);
+		return property.hashCode();
 	}
 	
 	@Override public boolean equals(final Object o) {

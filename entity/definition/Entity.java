@@ -14,28 +14,28 @@ public abstract class Entity implements Serializable, Cloneable, Comparable<Enti
 	
 	@Override
 	public String toString() {
-		return utils.Utilities.toString(this);
+		return entity.definition.EntityInspector.toString(this);
 	}
 	
 	@Override
 	public int hashCode() {
-		return utils.Utilities.hash(this);
+		return entity.definition.EntityInspector.hash(this);
 	}
 	
 	@Override
 	public boolean equals(final Object o) {
 		if(getClass()==o.getClass()) {
-			return utils.Utilities.equals(this, (Entity)o);
+			return entity.definition.EntityInspector.equals(this, (Entity)o);
 		}else return false;
 	}
 	
 	@Override
 	public Entity clone() {
-		return utils.Utilities.clone(this);
+		return entity.definition.EntityInspector.clone(this);
 	}
 	
 	protected StringBuilder getKey(){
-		final Object[] values=utils.Utilities.evaluateFields(this);//values of serializable fields
+		final Object[] values=entity.definition.EntityInspector.evaluateFields(this);//values of serializable fields
 		final StringBuilder b=new StringBuilder();
 		Arrays.asList(values).forEach(x->b.append(x.toString()));
 		return b;
@@ -47,6 +47,6 @@ public abstract class Entity implements Serializable, Cloneable, Comparable<Enti
 	}
 	
 	@Override
-	public void finalize() {}//TODO complete method implementation
+	public void finalize() {}//optional resource release
 
 }

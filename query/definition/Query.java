@@ -4,9 +4,9 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 
+import collections.FilteredIterator;
 import entity.definition.Entity;
 import entity.definition.Property;
-import utils.FilteredIterator;
 
 /**
  * Holds query definition
@@ -125,8 +125,20 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 		return selectProperties.iterator(entry);
 	}
 	
-	public final int dimension() {
+	public final int selectDimension() {
 		return selectProperties.size();
+	}
+	
+	public FilteredIterator<QualifiedProperty<? extends Entity,?>,Entry<? extends Entity>> sortByIterator(final Entry<? extends Entity> entry){
+		return sortByProperties.iterator(entry);
+	}
+	
+	public final int sortByDimension() {
+		return sortByProperties.size();
+	}
+	
+	public boolean sortByEmpty() {
+		return sortByProperties.empty();
 	}
 	
 	public final Set<Entry<? extends Entity>> getEntries(){

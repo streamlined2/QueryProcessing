@@ -6,8 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.StringJoiner;
 
+import collections.FilteredIterator;
 import entity.definition.Entity;
-import utils.FilteredIterator;
 
 class PropertyList implements Iterable<QualifiedProperty<? extends Entity,?>>{
 	private List<QualifiedProperty<? extends Entity,?>> properties=new LinkedList<>();
