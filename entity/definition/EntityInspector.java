@@ -2,16 +2,28 @@ package entity.definition;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 import java.io.ObjectStreamField;
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import query.exceptions.QueryException;
+import start.Runner;
 
 /**
  * Entity inspection & analysis utility class 
@@ -19,6 +31,8 @@ import java.util.StringJoiner;
  *
  */
 public final class EntityInspector {
+	
+	private static final String ENTITY_BEANS_PACKAGE="entity.beans.";
 	
 	private EntityInspector() {}
 
@@ -136,5 +150,41 @@ public final class EntityInspector {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	/**
+	 * Finds entity classes that are located in classpath and collects them in resulting set
+	 * @return set of entity classes
+	 * @throws QueryException incorrect URI or class file not found 
+	 */
+	public static Set<Class<? extends Entity>> getEntityBeans() {
+		final Set<Class<? extends Entity>> entityClasses=new HashSet<>();
+		final ClassLoader cl=Thread.currentThread().getContextClassLoader();
+		final URL packageURL=cl.getResource(
+				ENTITY_BEANS_PACKAGE.replace(".", "/")+"package-info.class");
+		try {
+			final File[] entityFiles=new File(packageURL.toURI()).getParentFile().listFiles(new FilenameFilter() {
+				@Override public boolean accept(final File dir, final String name) {
+					return name.endsWith(".class"); 
+				}
+			});
+			for(final File f:entityFiles) {
+				try {
+					final Class<?> cls=cl.loadClass(getPackageClass(f));
+					if(Entity.class.isAssignableFrom(cls)) entityClasses.add((Class<? extends Entity>) cls);
+				} catch (ClassNotFoundException e) {//skip class if search failed
+				}
+			}
+		} catch (URISyntaxException e) {
+		}
+		
+		return entityClasses;
+	}
+	
+	private static String getPackageClass(final File path) {
+		final int index=path.getName().indexOf(".");
+		return ENTITY_BEANS_PACKAGE+
+				(index!=-1?path.getName().substring(0,index):path.getName().substring(0));
+	}
+	
 
 }

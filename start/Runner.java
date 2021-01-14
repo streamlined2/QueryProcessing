@@ -1,10 +1,22 @@
 package start;
+
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+//import java.sql.*;
 import java.time.Year;
+import java.util.Properties;
+import java.util.Set;
 
 import entity.beans.Country;
 import entity.beans.Location;
 import entity.beans.Person;
 import entity.definition.DataSource;
+import entity.definition.Entity;
+import entity.definition.EntityInspector;
 import entity.definition.EntitySource;
 import query.definition.Query;
 import query.definition.QueryResult;
@@ -58,16 +70,68 @@ public class Runner {
 		locationEntry.sortBy(Location::name);
 		personEntry.sortBy(Person::lastname,Person::firstname);
 		//define filter conditions
-		//countryEntry.where((Country c)->c.name().equals("USA"));
+		countryEntry.where((Country c)->c.name().equals("USA"));
 		//locationEntry.where((Location loc)->loc.name().startsWith("W"));
-		personEntry.where((Person p)->p.firstname().startsWith("J"));
+		//personEntry.where((Person p)->p.firstname().startsWith("J"));
 
 		//System.out.println(q1);
 		
 		QueryProcessor processor=new BasicQueryProcessor(q1);
 		QueryResult rst=processor.fetch(data);
 		System.out.printf("Query #1: \n%s\n",rst);
-		
+
+		Set<Class<? extends Entity>> entityClasses=EntityInspector.getEntityBeans();
+		entityClasses.forEach(System.out::println);
+
+		/*
+		  //Class.forName("com.mysql.cj.jdbc.Driver");//-Djdbc.drivers=com.mysql.cj.jdbc.Driver 
+		  final Properties info=new Properties(); 
+		  final String uri=System.getProperty("dbURI");//-DdbURI=jdbc:mysql://localhost:3306/db?serverTimezone=UTC 
+		  info.put("user", System.getProperty("dbUser"));
+		  info.put("password", System.getProperty("dbPassword")); 
+		  try (final Connection conn=DriverManager.getConnection(uri,info)){//?user=user&password=pass
+		  
+			  final DatabaseMetaData meta=conn.getMetaData();
+			  System.out.printf("%s %s %s\n",
+					  meta.getDatabaseProductName(),
+					  meta.getDatabaseMajorVersion(),
+					  meta.getDatabaseMinorVersion());
+			  
+			  ResultSet schemas=meta.getCatalogs(); 
+			  System.out.println("catalogs:");
+			  for(;schemas.next();) { System.out.println(schemas.getObject(1)); }
+			  System.out.println("catalog separator: "+meta.getCatalogSeparator());
+			  System.out.println("catalog term: "+meta.getCatalogTerm());
+			  
+			  ResultSet columns=meta.getColumns("db",null,"country",null);
+			  System.out.println("columns for country:"); 
+			  for(;columns.next();) {
+				  System.out.println(columns.getObject(4));//1 - db,2 - null,3 - country,4 -name of field 
+			  }
+			  
+			  ResultSet primaryKeys=meta.getPrimaryKeys("db", null, "country");
+			  System.out.println("primary keys:"); 
+			  for(;primaryKeys.next();) {
+				  System.out.println(primaryKeys.getObject(4));//1 - db, 2 - null, 3 - country,  4 - id 
+			  }
+			  
+			  ResultSet tables=meta.getTables("db", null, null, new String[] {"TABLE"});
+			  System.out.println("tables: "); for(;tables.next();) {
+				  System.out.println(tables.getObject(3));//1 - db, 2 - null, 3 - table name(country,location) 
+			  }
+			  
+			  try(final Statement state=conn.createStatement()){ 
+				  try(final ResultSet rs=state.executeQuery("select * from country;")){//db. 
+					  for(;rs.next();) {
+						  System.out.printf("%d %s\n",rs.getInt(1),rs.getString(2)); 
+					  } 
+				  } 
+			  }
+			  
+		  } catch (SQLException e) { // TODO Auto-generated catch block
+			  e.printStackTrace(); 
+		  }
+		 */
 		
 	}
 
