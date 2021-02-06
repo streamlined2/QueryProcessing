@@ -20,6 +20,14 @@ class PropertyList implements Iterable<QualifiedProperty<? extends Entity,?>>{
 		this.properties.addAll(Arrays.asList(properties));
 	}
 	
+	void addProperties(final List<QualifiedProperty<? extends Entity,?>> list) {
+		this.properties.addAll(list);
+	}
+	
+	boolean contains(final QualifiedProperty<? extends Entity, ?> property) {
+		return properties.contains(property);
+	}
+	
 	@Override
 	public String toString() {
 		final StringJoiner joiner=new StringJoiner(",");
@@ -45,4 +53,36 @@ class PropertyList implements Iterable<QualifiedProperty<? extends Entity,?>>{
 		return properties.size();
 	}
 	
+	/**
+	 * Checks if {@code properties} starts with same items in the same order as {@code subList}  
+	 * @param subList
+	 * @return true if check successful
+	 */
+	public boolean isSubList(final PropertyList subList) {
+		if(subList.size()>size()) return false;
+		else {
+			boolean isSubList=true;
+			var i=properties.iterator();
+			for(var item:subList) {
+				isSubList=isSubList && item.equals(i.next());
+				if(!isSubList) return false;
+			}
+			return true;
+		}
+	}
+	
+	/**
+	 * Merges two property lists into new one
+	 * @param list list to merge
+	 * @return resulting list that contains items from both  
+	 */
+	public PropertyList merge(final PropertyList list){
+		final PropertyList result=new PropertyList();
+		result.addProperties(properties);
+		list.forEach(prop->{
+				if(!result.contains(prop)) result.addProperty(prop);
+		});
+		return result;
+	}
+
 }

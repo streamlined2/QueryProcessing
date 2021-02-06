@@ -20,6 +20,7 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 	private final PropertyList selectProperties=new PropertyList();//fetch no properties at all, if empty
 	private final PropertyList sortByProperties=new PropertyList();//no ordering at all, if empty
 	private final PropertyList groupByProperties=new PropertyList();//no aggregation, if empty
+	private final AggregationList aggregationProperties=new AggregationList();
 	private final PropertyList havingByProperies=new PropertyList();//no extra filtering after aggregation, if empty
 	private final JointsMap joints=new JointsMap();//register links between data entries
 	
@@ -58,12 +59,21 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 	}
 	
 	@SafeVarargs
+	public final void aggregate(final AggregationProperty<? extends Entity,?>...properties) {
+		aggregationProperties.addProperties(properties);
+	}
+	
+	@SafeVarargs
 	public final void havingBy(final QualifiedProperty<? extends Entity,?>...properties) {
 		havingByProperies.addProperties(properties);
 	}
 	
 	private StringBuilder selectClause() {
-		return new StringBuilder().append("SELECT ").append(selectProperties).append(selectProperties.empty()?"":"\n");
+		return new StringBuilder().append("SELECT ").append(selectProperties).append(" ");
+	}
+	
+	private StringBuilder aggregationClause() {
+		return new StringBuilder().append(",").append(selectProperties.empty()?"":",").append(aggregationProperties).append(" ");
 	}
 	
 	private StringBuilder fromClause() {
@@ -108,6 +118,7 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 	public String toString() {
 		return new StringBuilder()
 				.append(selectClause())
+				.append(aggregationClause())
 				.append(fromClause())
 				.append(whereClause())
 				.append(orderByClause())
@@ -137,8 +148,32 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 		return sortByProperties.size();
 	}
 	
+	public final int sortGroupByDimension() {
+		return sortByProperties.merge(groupByProperties).size();
+	}
+	
+	public FilteredIterator<QualifiedProperty<? extends Entity,?>,Entry<? extends Entity>> sortGroupByIterator(final Entry<? extends Entity> entry){
+		return sortByProperties.merge(groupByProperties).iterator(entry);
+	}
+	
+	public FilteredIterator<AggregationProperty<? extends Entity,?>,Entry<? extends Entity>> aggregationIterator(final Entry<? extends Entity> entry){
+		return aggregationProperties.iterator(entry);
+	}
+	
+	public Iterator<AggregationProperty<? extends Entity,?>> aggregationIterator() {
+		return aggregationProperties.iterator();
+	}
+	
+	public final int aggregateDimension() {
+		return aggregationProperties.size();
+	}
+	
 	public boolean sortByEmpty() {
 		return sortByProperties.empty();
+	}
+	
+	public boolean groupByEmpty() {
+		return groupByProperties.empty();
 	}
 	
 	public final Set<Entry<? extends Entity>> getEntries(){
@@ -147,6 +182,10 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 	
 	public final Optional<Link<? extends Entity,? extends Entity>> getLink(final Entry<? extends Entity> entry){
 		return joints.getLink(entry); 
+	}
+	
+	public boolean aggregatingByOrderProperties() {
+		return groupByProperties.isSubList(sortByProperties);
 	}
 	
 }

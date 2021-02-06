@@ -3,6 +3,8 @@ package entity.beans;
 import java.time.Year;
 
 import entity.definition.Entity;
+import math.Cardinal;
+import math.Real;
 
 public class Location extends Entity {
 	
@@ -14,11 +16,11 @@ public class Location extends Entity {
 	private Country country;
 	public Country country() { return country;}
 	
-	private Integer population;
-	public Integer population() { return population;}
+	private Cardinal population;
+	public Cardinal population() { return population;}
 	
-	private Double area;
-	public Double area() { return area;}
+	private Real area;
+	public Real area() { return area;}
 	
 	private Year founded;
 	public Year founded() { return founded;}
@@ -29,8 +31,8 @@ public class Location extends Entity {
 	public Location(final String name,final Country country,final Integer population,final Double area,final Year founded,final Coordinate coordinate) {
 		this.name=name;
 		this.country=country;
-		this.population=population;
-		this.area=area;
+		this.population=new Cardinal(population);
+		this.area=new Real(area);
 		this.founded=founded;
 		this.coordinate=coordinate;
 	}

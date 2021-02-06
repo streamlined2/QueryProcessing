@@ -1,10 +1,11 @@
 package query.processor;
 
 import query.definition.Query;
+import query.definition.result.QueryResult;
 import entity.definition.DataSource;
 import query.definition.Entry;
-import query.definition.QueryResult;
 import query.exceptions.NoDataException;
+import query.exceptions.OrderGroupClausesNotCompatibleException;
 import query.exceptions.QueryException;
 
 /**
@@ -24,6 +25,11 @@ public interface QueryProcessor {
 			if(!dataSource.hasDataFor(entry)) 
 				throw new NoDataException(entry.getEntityClass(),dataSource);
 		}
+	}
+	
+	public default void checkIfOrderGroupClausesCompatible() throws OrderGroupClausesNotCompatibleException {
+		if(!getQuery().groupByEmpty() && !getQuery().aggregatingByOrderProperties()) 
+			throw new OrderGroupClausesNotCompatibleException(getQuery());
 	}
 	
 }

@@ -8,6 +8,8 @@ import java.util.function.Predicate;
 
 import entity.definition.Entity;
 import entity.definition.Property;
+import math.Numeric;
+import query.definition.aggregators.Aggregator;
 
 public class Entry<T extends Entity> {
 	private final Query query;
@@ -35,6 +37,18 @@ public class Entry<T extends Entity> {
 		for(final var getter:getters) {
 			query.sortBy(new QualifiedProperty<T, R>(this, getter));
 		}
+		return this;
+	}
+	
+	public <R> Entry<T> groupBy(@SuppressWarnings("unchecked") final Function<T,R>... getters){
+		for(final var getter:getters) {
+			query.groupBy(new QualifiedProperty<T,R>(this,getter));
+		}
+		return this;
+	}
+	
+	public <R extends Numeric> Entry<T> aggregate(final Function<T,R> getter,final Aggregator<? extends Numeric,R> aggregator){
+		query.aggregate(new AggregationProperty<T,R>(this,getter,aggregator));
 		return this;
 	}
 	

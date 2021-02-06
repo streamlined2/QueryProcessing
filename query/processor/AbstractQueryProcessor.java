@@ -13,6 +13,7 @@ import collections.Searcher;
 import entity.definition.DataSource;
 import entity.definition.Entity;
 import entity.definition.EntityInspector;
+import query.definition.AggregatedData;
 import query.definition.Entry;
 import query.definition.Link;
 import query.definition.QualifiedProperty;
@@ -210,8 +211,8 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 		
 		private final Tuple tuple;
 		
-		CollectTupleDataVisitor(final int dimension){
-			tuple=new Tuple(dimension);
+		CollectTupleDataVisitor(final int valuesDimension){
+			tuple=new Tuple(valuesDimension);
 		}
 
 		Tuple getTuple() {
@@ -224,7 +225,7 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 			for(var i=getQuery().selectIterator(entry);i.hasNext();) {//scan entity properties for 'entry'
 				//find column index for property,evaluate and map value to tuple column
 				final var property=i.next();
-				tuple.set(i.nextIndex(), property.getProperty().getValue(entity));
+				tuple.setValue(i.nextIndex(), property.getProperty().getValue(entity));
 			};
 			
 		}
@@ -249,7 +250,7 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 			keys=new Object[dimension];
 		}
 
-		Comparable<?> getOrderKey() {
+		StringBuilder getOrderKey() {
 			final StringBuilder orderKey=new StringBuilder();
 			Arrays.asList(keys).forEach(x->orderKey.append(x));
 			return orderKey;
@@ -258,11 +259,10 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 		@Override
 		//extract values of given entity/entry and compose them as sort key
 		public void accept(final Optional<T> entity, final Entry<T> entry) {
-			for(var i=getQuery().sortByIterator(entry);i.hasNext();) {//scan entity properties for 'entry'
+			for(var i=getQuery().sortGroupByIterator(entry);i.hasNext();) {//scan entity properties for 'entry'
 				//evaluate property of entity and store value as part of future sort key
 				final var property=i.next();
-				final int index=i.nextIndex();
-				keys[index]=property.getProperty().getValue(entity);
+				keys[i.nextIndex()]=property.getProperty().getValue(entity);
 			};
 			
 		}
@@ -270,13 +270,52 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 	}
 	
 	//constructs visitor and passes it to compose sort key for every tuple
-	protected Comparable<? super Comparable<?>> composeOrderKey(
+	protected StringBuilder composeOrderKey(
 			final Optional<? extends Entity> initialTupleEntity,
 			final DataSource dataSource) 
 	throws QueryException {
-		final var visitor=new ComposeOrderKeyVisitor(getQuery().sortByDimension());
+		final var visitor=new ComposeOrderKeyVisitor(getQuery().sortGroupByDimension());
 		enumerateTupleEntities(initialTupleEntity, dataSource, visitor);
 		return visitor.getOrderKey();
+	}
+	
+	private class AggregateEvaluationVisitor<T extends Entity> implements BiConsumer<Optional<T>,Entry<T>>{
+		
+		private final AggregatedData data;
+		
+		AggregateEvaluationVisitor(final int aggregationDimension){
+			this.data=new AggregatedData(aggregationDimension);
+		}
+		
+		AggregatedData getData() {
+			return data;
+		}
+
+		@Override
+		//collect and store aggregated values 
+		public void accept(final Optional<T> entity, final Entry<T> entry) {
+			for(var i=getQuery().aggregationIterator(entry);i.hasNext();) {//scan entity properties for 'entry'
+				//evaluate property of entity and store value as part of future aggregation value
+				final var property=i.next();
+				data.setValue(
+						i.nextIndex(), property.getProperty().getValue(entity));
+			};
+			
+		}
+		
+	}
+	
+	//constructs visitor to gather aggregate values for every group key
+	protected AggregatedData aggregateValues(
+			final Optional<? extends Entity> initialTupleEntity,
+			final DataSource dataSource) 
+	throws QueryException {
+		final var visitor = new AggregateEvaluationVisitor(getQuery().aggregateDimension());
+		enumerateTupleEntities(
+				initialTupleEntity, 
+				dataSource, 
+				visitor);
+		return visitor.getData();
 	}
 	
 }

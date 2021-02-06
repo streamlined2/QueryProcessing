@@ -48,8 +48,7 @@ public class QualifiedProperty<T extends Entity,R> {
 	@SuppressWarnings("unchecked")
 	@Override public boolean equals(final Object o) {
 		return (o instanceof QualifiedProperty qProp)?
-				entry.equals(qProp.entry) && 
-				property.equals(qProp.property):
+				entry.equals(qProp.entry) && property.equals(qProp.property):
 					false;
 	}
 }

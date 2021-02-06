@@ -152,7 +152,7 @@ public final class EntityInspector {
 	}
 	
 	/**
-	 * Finds entity classes that are located in classpath and collects them in resulting set
+	 * Finds entity classes that are located within classpath and collects them in resulting set
 	 * @return set of entity classes
 	 * @throws QueryException incorrect URI or class file not found 
 	 */

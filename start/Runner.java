@@ -6,10 +6,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-//import java.sql.*;
 import java.time.Year;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 
 import entity.beans.Country;
 import entity.beans.Location;
@@ -19,10 +20,11 @@ import entity.definition.Entity;
 import entity.definition.EntityInspector;
 import entity.definition.EntitySource;
 import query.definition.Query;
-import query.definition.QueryResult;
+import query.definition.result.QueryResult;
 import query.exceptions.QueryException;
 import query.processor.QueryProcessor;
 import query.processor.BasicQueryProcessor;
+import query.definition.AggregationProperty;
 import query.definition.Entry;
 
 public class Runner {
@@ -35,13 +37,27 @@ public class Runner {
 				new Country("USA",9833520D,328239523),
 				new Country("UK",242495D,67886004),
 				new Country("France",640679D,67153000));
+		
 		final EntitySource<Location> locations=new EntitySource<>(
 				new Location("Washington",countries.one(Country::name,"USA"),705_749,184_661D,Year.of(1791),new Location.Coordinate(38.9101D, -77.0147D)),
 				new Location("New York City",countries.one(Country::name,"USA"),8_175_133,1_212.60D,Year.of(1624),new Location.Coordinate(40.71274D, -74.005974D)),
+				new Location("Chicago",countries.one(Country::name,"USA"),2_693_976,606.60D,Year.of(1780),new Location.Coordinate(41.881944D, -87.627778D)),
+				new Location("Los Angeles",countries.one(Country::name,"USA"),3_792_621,1_302.06D,Year.of(1835),new Location.Coordinate(34.05D, -118.25D)),
+				new Location("Atlanta",countries.one(Country::name,"USA"),420_003,354.22D,Year.of(1847),new Location.Coordinate(33.755D, -84.39D)),
+				new Location("Houston",countries.one(Country::name,"USA"),2_100_263,1_739.69D,Year.of(1837),new Location.Coordinate(29.762778D, -95.383056D)),
+
 				new Location("London",countries.one(Country::name,"UK"),8_961_989,1_572D,Year.of(47),new Location.Coordinate(51.507222D, -0.1275D)),
 				new Location("Glasgow",countries.one(Country::name,"UK"),633_120,175D,Year.of(580),new Location.Coordinate(55.860916D, -4.251433D)),
+				new Location("Bristol",countries.one(Country::name,"UK"),463_400,110D,Year.of(1155),new Location.Coordinate(51.45D, -2.583333D)),
+				new Location("Gloucester",countries.one(Country::name,"UK"),129_128,40.54D,Year.of(1541),new Location.Coordinate(51.864444D, -2.244444D)),
+				new Location("Birmingham",countries.one(Country::name,"UK"),1_141_816,267.8D,Year.of(600),new Location.Coordinate(52.48D, -1.9025D)),
+
 				new Location("Paris",countries.one(Country::name,"France"),2_148_271,105.4D,Year.of(-52),new Location.Coordinate(48.856613D, 2.352222D)),
-				new Location("Bordeaux",countries.one(Country::name,"France"),254_436,49.36D,Year.of(-60),new Location.Coordinate(44.84D, -0.58D)));
+				new Location("Bordeaux",countries.one(Country::name,"France"),254_436,49.36D,Year.of(-60),new Location.Coordinate(44.84D, -0.58D)),
+				new Location("Marseille",countries.one(Country::name,"France"),855_393,240.62D,Year.of(-600),new Location.Coordinate(43.2964D, 5.37D)),
+				new Location("Lyon",countries.one(Country::name,"France"),516_092,47.87D,Year.of(-43),new Location.Coordinate(45.76D, 4.84D))
+		);
+		
 		final EntitySource<Person> persons=new EntitySource<Person>(
 				new Person("John","Kurtiss",20,Person.Sex.MALE,locations.one(Location::name,"Washington")),
 				new Person("Janet","Small",30,Person.Sex.FEMALE,locations.one(Location::name,"New York City")),
@@ -49,6 +65,7 @@ public class Runner {
 				new Person("Juliet","Freeman",22,Person.Sex.FEMALE,locations.one(Location::name,"London")),
 				new Person("Maurice","Lacroix",25,Person.Sex.MALE,locations.one(Location::name,"Paris")),
 				new Person("Genevieve","Odila",15,Person.Sex.FEMALE,locations.one(Location::name,"Bordeaux")));
+		
 		final DataSource data=new DataSource(
 				countries,locations,persons
 		);
@@ -60,29 +77,36 @@ public class Runner {
 		final Entry<Location> locationEntry=q1.addEntry(Location.class);
 		final Entry<Country> countryEntry=q1.addEntry(Country.class);
 		//define select properties
+		personEntry.select(Person::lastname,Person::firstname,Person::age,Person::sex);
 		countryEntry.select(Country::name);
 		locationEntry.select(Location::name);
-		personEntry.select(Person::lastname,Person::firstname,Person::age,Person::sex);
 		locationEntry.select(Location::founded);
 		countryEntry.select(Country::population);
 		//define sort by properties
 		countryEntry.sortBy(Country::name);
-		locationEntry.sortBy(Location::name);
 		personEntry.sortBy(Person::lastname,Person::firstname);
+		locationEntry.sortBy(Location::name);
 		//define filter conditions
-		countryEntry.where((Country c)->c.name().equals("USA"));
+		//countryEntry.where((Country c)->c.name().equals("USA"));
 		//locationEntry.where((Location loc)->loc.name().startsWith("W"));
-		//personEntry.where((Person p)->p.firstname().startsWith("J"));
+		personEntry.where((Person p)->p.firstname().startsWith("J"));
 
 		//System.out.println(q1);
 		
-		QueryProcessor processor=new BasicQueryProcessor(q1);
-		QueryResult rst=processor.fetch(data);
-		System.out.printf("Query #1: \n%s\n",rst);
+		System.out.printf("Query #1> join person/location/country entities, select fields, filter tuples and order result: \n%s\n\n",new BasicQueryProcessor(q1).fetch(data));	
 
-		Set<Class<? extends Entity>> entityClasses=EntityInspector.getEntityBeans();
-		entityClasses.forEach(System.out::println);
-
+		final Query q2=new Query();
+		final Entry<Country> c=q2.addEntry(Country.class);
+		final Entry<Location> l=q2.addEntry(Location.class);
+		c.select(Country::name);
+		l.aggregate(Location::population,AggregationProperty.INTEGER_COUNT);
+		l.aggregate(Location::population,AggregationProperty.INTEGER_TOTAL);
+		l.aggregate(Location::area,AggregationProperty.DOUBLE_TOTAL);
+		l.aggregate(Location::area,AggregationProperty.DOUBLE_AVERAGE);
+		//c.sortBy(Country::name);
+		c.groupBy(Country::name);
+		System.out.printf("Query #2> fetch count and population total, area total and average for each country:\n%s\n\n",new BasicQueryProcessor(q2).fetch(data));
+		
 		/*
 		  //Class.forName("com.mysql.cj.jdbc.Driver");//-Djdbc.drivers=com.mysql.cj.jdbc.Driver 
 		  final Properties info=new Properties(); 
@@ -133,6 +157,10 @@ public class Runner {
 		  }
 		 */
 		
+		/*
+		 * Set<Class<? extends Entity>> entityClasses=EntityInspector.getEntityBeans();
+		 * entityClasses.forEach(System.out::println);
+		 */
 	}
 
 }

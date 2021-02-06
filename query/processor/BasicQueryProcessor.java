@@ -1,14 +1,13 @@
 package query.processor;
 
-import java.util.Comparator;
 import java.util.Optional;
 
-import collections.sort.QuickSorter;
 import entity.definition.DataSource;
 import entity.definition.Entity;
+import query.definition.AggregatedData;
 import query.definition.Query;
-import query.definition.QueryResult;
 import query.definition.Tuple;
+import query.definition.result.QueryResult;
 import query.exceptions.NoInitialEntityException;
 import query.exceptions.QueryException;
 
@@ -27,10 +26,11 @@ public class BasicQueryProcessor extends AbstractQueryProcessor {
 	public QueryResult fetch(final DataSource dataSource) throws QueryException {
 		
 		checkIfAllNecessaryDataSupplied(dataSource);
+		checkIfOrderGroupClausesCompatible();
 		
 		buildListOfRelations();
 
-		final QueryResult result=new QueryResult();
+		final QueryResult result=QueryResult.createQueryResult(getQuery());
 
 		//find entitySource for initial entity of relation list
 		final var initialEntitySource=dataSource.getDataFor(
@@ -42,12 +42,10 @@ public class BasicQueryProcessor extends AbstractQueryProcessor {
 				if(isTupleAcceptable(iTEntity,dataSource)) {
 					final Tuple tuple=collectTupleData(iTEntity,dataSource);
 					tuple.setOrderKey(composeOrderKey(iTEntity,dataSource));
-					result.add(tuple);
+					result.accumulate(tuple,aggregateValues(iTEntity,dataSource));
 				}
 			}
-			if(!getQuery().sortByEmpty()) {
-				new QuickSorter<>(Comparator.naturalOrder()).sort(result);
-			}
+			result.finish();
 		}
 		else throw new NoInitialEntityException();
 		 

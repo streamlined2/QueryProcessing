@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.StringJoiner;
 
 /**
- * Holds set of property values of query result
+ * Holds set of property values of ordinary query or key values of aggregated query result
  * @author Serhii Pylypenko
  *
  */
@@ -12,21 +12,25 @@ import java.util.StringJoiner;
 public class Tuple implements Comparable<Tuple>{
 	
 	private final Object[] values;
-	private Comparable<? super Comparable<?>> orderKey;
+	private StringBuilder orderKey;
 	
 	public Tuple(final int dimension){
 		this.values=new Object[dimension];
 	}
 	
-	public void setOrderKey(final Comparable<? super Comparable<?>> orderKey) {
+	public void setOrderKey(final StringBuilder orderKey) {
 		this.orderKey=orderKey;		
 	}
 	
-	public Comparable<? super Comparable<?>> getOrderKey(){
+	public StringBuilder getOrderKey(){
 		return orderKey;
 	}
 	
-	public void set(final int index,final Object value) {
+	public Object getValue(final int index) {
+		return values[index];
+	}
+	
+	public void setValue(final int index,final Object value) {
 		values[index]=value;
 	}
 	
@@ -41,13 +45,13 @@ public class Tuple implements Comparable<Tuple>{
 	
 	@Override
 	public String toString() {
-		StringJoiner joiner=new StringJoiner(",","[","]");
+		final StringJoiner joiner=new StringJoiner(",","[","]");
 		Arrays.asList(values).forEach(x->joiner.add(x.toString()));
 		return joiner.toString();
 	}
 
 	@Override
-	public int compareTo(Tuple o) {
+	public int compareTo(final Tuple o) {
 		return orderKey.compareTo(o.orderKey);
 	}
 
