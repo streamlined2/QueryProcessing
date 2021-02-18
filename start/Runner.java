@@ -1,36 +1,123 @@
 package start;
 
+import java.io.FileReader;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.time.LocalDate;
 import java.time.Year;
 import java.util.Properties;
-import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
-
 import entity.beans.Country;
 import entity.beans.Location;
 import entity.beans.Person;
+import entity.beans.Product;
 import entity.definition.DataSource;
-import entity.definition.Entity;
-import entity.definition.EntityInspector;
+import entity.definition.Entity.PrimaryKey;
 import entity.definition.EntitySource;
+import entity.persistence.BasicEntityManager;
+import entity.persistence.EntityManager;
 import query.definition.Query;
-import query.definition.result.QueryResult;
 import query.exceptions.QueryException;
-import query.processor.QueryProcessor;
 import query.processor.BasicQueryProcessor;
 import query.definition.AggregationProperty;
 import query.definition.Entry;
 
 public class Runner {
 
-	@SuppressWarnings("unchecked")
 	public static void main(final String... args) throws QueryException {
+		//testQueries(args);
+		
+		//Class.forName("com.mysql.cj.jdbc.Driver");//-Djdbc.drivers=com.mysql.cj.jdbc.Driver
+	    try {
+			  
+	    	  final Properties info=new Properties();
+			  info.load(new FileReader("local.properties"));
+			  
+			  //final String uri=System.getProperty("uri");//-DdbURI=jdbc:mysql://localhost:3306/mydb?serverTimezone=UTC 
+			  //info.put("user", System.getProperty("user"));
+			  //info.put("password", System.getProperty("password"));
+			  try (final Connection conn=DriverManager.getConnection(info.getProperty("uri"),info)){
+				  
+				  EntityManager eM=new BasicEntityManager(conn);
+				  
+				  Product productA=new Product("Receiver",BigDecimal.valueOf(899),Product.Status.IN_STOCK,Date.valueOf(LocalDate.now()));
+				  eM.persist(productA);
+				  System.out.println(productA);
+				  
+				  //Product productA=new Product("Transmitter",BigDecimal.valueOf(900),Product.Status.OUT_OF_STOCK,Date.valueOf(LocalDate.now()));
+				  productA.setValue("name", "Transmitter");
+				  eM.merge(productA);
+				  System.out.println(productA);
+				  
+				  eM.remove(Product.class,productA.id());
+				  System.out.println(eM.removeAll(Product.class));
+					  
+			  } catch (SQLException e) { // TODO Auto-generated catch block
+				  e.printStackTrace(); 
+			  }
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		//System.out.println(EntityInspector.analyzeEntity(Person.class));
+		//System.out.println(EntityInspector.analyzeEntity(Country.class));
+		//System.out.println(EntityInspector.analyzeEntity(Location.class));
+		
+		  /*
+				  final DatabaseMetaData meta=conn.getMetaData();
+				  System.out.printf("%s %s %s\n",
+						  meta.getDatabaseProductName(),
+						  meta.getDatabaseMajorVersion(),
+						  meta.getDatabaseMinorVersion());
+				  
+				  ResultSet schemas=meta.getCatalogs(); 
+				  System.out.println("catalogs:");
+				  for(;schemas.next();) { System.out.println(schemas.getObject(1)); }
+				  System.out.println("catalog separator: "+meta.getCatalogSeparator());
+				  System.out.println("catalog term: "+meta.getCatalogTerm());
+				  
+			  ResultSet columns=meta.getColumns("db",null,"country",null);
+			  System.out.println("columns for country:"); 
+			  for(;columns.next();) {
+				  System.out.println(columns.getObject(4));//1 - db,2 - null,3 - country,4 -name of field 
+			  }
+			  
+			  ResultSet primaryKeys=meta.getPrimaryKeys("db", null, "country");
+			  System.out.println("primary keys:"); 
+			  for(;primaryKeys.next();) {
+				  System.out.println(primaryKeys.getObject(4));//1 - db, 2 - null, 3 - country,  4 - id 
+			  }
+			  
+			  ResultSet tables=meta.getTables("db", null, null, new String[] {"TABLE"});
+			  System.out.println("tables: "); for(;tables.next();) {
+				  System.out.println(tables.getObject(3));//1 - db, 2 - null, 3 - table name(country,location) 
+			  }
+			  
+			  try(final Statement state=conn.createStatement()){ 
+				  try(final ResultSet rs=state.executeQuery("select * from country;")){//db. 
+					  for(;rs.next();) {
+						  System.out.printf("%d %s\n",rs.getInt(1),rs.getString(2)); 
+					  } 
+				  } 
+			  }
+			  
+		 */
+		
+		/*
+		 * Set<Class<? extends Entity>> entityClasses=EntityInspector.getEntityBeans();
+		 * entityClasses.forEach(System.out::println);
+		 */
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static void testQueries(final String[] args) throws QueryException {
 		
 		//define source data
 		final EntitySource<Country> countries=new EntitySource<>(
@@ -78,10 +165,8 @@ public class Runner {
 		final Entry<Country> countryEntry=q1.addEntry(Country.class);
 		//define select properties
 		personEntry.select(Person::lastname,Person::firstname,Person::age,Person::sex);
-		countryEntry.select(Country::name);
-		locationEntry.select(Location::name);
-		locationEntry.select(Location::founded);
-		countryEntry.select(Country::population);
+		countryEntry.select(Country::name,Country::population);
+		locationEntry.select(Location::name,Location::founded);
 		//define sort by properties
 		countryEntry.sortBy(Country::name);
 		personEntry.sortBy(Person::lastname,Person::firstname);
@@ -107,60 +192,6 @@ public class Runner {
 		c.groupBy(Country::name);
 		System.out.printf("Query #2> fetch count and population total, area total and average for each country:\n%s\n\n",new BasicQueryProcessor(q2).fetch(data));
 		
-		/*
-		  //Class.forName("com.mysql.cj.jdbc.Driver");//-Djdbc.drivers=com.mysql.cj.jdbc.Driver 
-		  final Properties info=new Properties(); 
-		  final String uri=System.getProperty("dbURI");//-DdbURI=jdbc:mysql://localhost:3306/db?serverTimezone=UTC 
-		  info.put("user", System.getProperty("dbUser"));
-		  info.put("password", System.getProperty("dbPassword")); 
-		  try (final Connection conn=DriverManager.getConnection(uri,info)){//?user=user&password=pass
-		  
-			  final DatabaseMetaData meta=conn.getMetaData();
-			  System.out.printf("%s %s %s\n",
-					  meta.getDatabaseProductName(),
-					  meta.getDatabaseMajorVersion(),
-					  meta.getDatabaseMinorVersion());
-			  
-			  ResultSet schemas=meta.getCatalogs(); 
-			  System.out.println("catalogs:");
-			  for(;schemas.next();) { System.out.println(schemas.getObject(1)); }
-			  System.out.println("catalog separator: "+meta.getCatalogSeparator());
-			  System.out.println("catalog term: "+meta.getCatalogTerm());
-			  
-			  ResultSet columns=meta.getColumns("db",null,"country",null);
-			  System.out.println("columns for country:"); 
-			  for(;columns.next();) {
-				  System.out.println(columns.getObject(4));//1 - db,2 - null,3 - country,4 -name of field 
-			  }
-			  
-			  ResultSet primaryKeys=meta.getPrimaryKeys("db", null, "country");
-			  System.out.println("primary keys:"); 
-			  for(;primaryKeys.next();) {
-				  System.out.println(primaryKeys.getObject(4));//1 - db, 2 - null, 3 - country,  4 - id 
-			  }
-			  
-			  ResultSet tables=meta.getTables("db", null, null, new String[] {"TABLE"});
-			  System.out.println("tables: "); for(;tables.next();) {
-				  System.out.println(tables.getObject(3));//1 - db, 2 - null, 3 - table name(country,location) 
-			  }
-			  
-			  try(final Statement state=conn.createStatement()){ 
-				  try(final ResultSet rs=state.executeQuery("select * from country;")){//db. 
-					  for(;rs.next();) {
-						  System.out.printf("%d %s\n",rs.getInt(1),rs.getString(2)); 
-					  } 
-				  } 
-			  }
-			  
-		  } catch (SQLException e) { // TODO Auto-generated catch block
-			  e.printStackTrace(); 
-		  }
-		 */
-		
-		/*
-		 * Set<Class<? extends Entity>> entityClasses=EntityInspector.getEntityBeans();
-		 * entityClasses.forEach(System.out::println);
-		 */
 	}
 
 }

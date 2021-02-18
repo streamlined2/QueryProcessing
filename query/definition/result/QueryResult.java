@@ -1,7 +1,5 @@
 package query.definition.result;
 
-import java.util.StringJoiner;
-
 import query.definition.AggregatedData;
 import query.definition.Query;
 import query.definition.Tuple;

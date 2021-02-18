@@ -14,9 +14,14 @@ import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
@@ -51,6 +56,79 @@ public final class EntityInspector {
 		}
 		return properties;		
 	}
+	
+	public record EntityDefinition (
+			Optional<ObjectStreamField> primaryKey,
+			Optional<ObjectStreamField> reference,
+			List<ObjectStreamField> entityCollection,
+			List<ObjectStreamField> data) implements Iterable<ObjectStreamField> {
+		
+		private static final String PRIMARY_KEY_ID="ID";
+		private static final String REFERENCE_SUFFIX="_ID";
+		
+		public static String getPrimaryKeyName() {
+			return PRIMARY_KEY_ID;
+		}
+
+		public static boolean isForeignKeyReference(final ObjectStreamField property) {
+			return 
+					property.getName().regionMatches(true, 
+							Math.max(property.getName().length()-EntityDefinition.REFERENCE_SUFFIX.length(),0), 
+							EntityDefinition.REFERENCE_SUFFIX, 0, EntityDefinition.REFERENCE_SUFFIX.length()) && 
+					Entity.class.isAssignableFrom(property.getType());
+		}
+		
+		public static boolean isPrimaryKeyProperty(final ObjectStreamField property) {
+			return 
+					property.getName().equalsIgnoreCase(EntityDefinition.PRIMARY_KEY_ID) && 
+					Number.class.isAssignableFrom(property.getType());
+		}
+		
+		//TODO check type of items (replace with array instead of collection?)
+		//boolean arrayOfEntities=propertyType.isArray() && Entity.class.isAssignableFrom(propertyType.componentType());
+		public static boolean isEntityCollection(final ObjectStreamField property) {
+			return Collection.class.isAssignableFrom(property.getType());
+		}
+
+		@Override public String toString() {
+			return new StringBuilder().
+					append("primary key=").append(primaryKey).append(",").
+					append("reference=").append(reference).append(",").
+					append("entities=").append(entityCollection).append(",").
+					append("data=").append(data).
+					toString();
+		}
+
+		@Override
+		public Iterator<ObjectStreamField> iterator() {
+			return data.iterator();
+		}
+
+	}
+		
+	public static EntityDefinition analyzeEntity(final Class<? extends Entity> srcClass) {
+		Optional<ObjectStreamField> primaryKey=Optional.empty();
+		Optional<ObjectStreamField> reference=Optional.empty();
+		final List<ObjectStreamField> entityCollection=new LinkedList<ObjectStreamField>();
+		final List<ObjectStreamField> data=new LinkedList<ObjectStreamField>();
+		for(final ObjectStreamField property:EntityInspector.getSerializableFields(srcClass)) {
+			if(
+					primaryKey.isEmpty() && 
+					EntityDefinition.isPrimaryKeyProperty(property)) {
+				primaryKey=Optional.of(property);
+			}else if(
+					reference.isEmpty() && 
+					EntityDefinition.isForeignKeyReference(property)) {
+				reference=Optional.of(property);
+			}else if(
+					EntityDefinition.isEntityCollection(property)) {
+				entityCollection.add(property);
+			}else {
+				data.add(property);
+			}
+		}
+		return new EntityDefinition(primaryKey,reference,entityCollection,data);
+	}
 
 	/**
 	 * Evaluates every serializable field of given {@code obj} and composes string representation 
@@ -61,7 +139,7 @@ public final class EntityInspector {
 	public static <T extends Serializable> String toString(final T obj) {
 		final StringJoiner joiner=new StringJoiner(",","{","}");
 		for(final Object field:EntityInspector.evaluateFields(obj)) {
-			joiner.add(field.toString());
+			joiner.add(field!=null?field.toString():"null");
 		}/*
 		Arrays.asList(evaluateFields(obj)).forEach(x->joiner.add(x.toString()));*/
 		return joiner.toString();

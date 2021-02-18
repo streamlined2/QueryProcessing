@@ -1,9 +1,16 @@
 package entity.definition;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.SQLData;
+import java.sql.SQLException;
+import java.sql.SQLInput;
+import java.sql.SQLOutput;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+
+import query.exceptions.EntitySetterException;
 
 /**
  * Basic class for every entity
@@ -13,6 +20,49 @@ import java.util.Set;
 
 @SuppressWarnings("serial")
 public abstract class Entity implements Serializable, Cloneable, Comparable<Entity> {
+	
+	public static class PrimaryKey implements Serializable/*, SQLData*/ {
+		private BigDecimal value;
+		
+		public PrimaryKey(final BigDecimal value) {this.value=value;}
+		
+		//implementation specific 
+		public void setPrimaryKeyInStatement(final PreparedStatement statement,final int index) throws SQLException {
+			statement.setBigDecimal(index, value);
+		}
+		
+		@Override public boolean equals(final Object o) { return o instanceof PrimaryKey key?value.equals(key.value):false;};
+		
+		@Override public int hashCode() { return value.hashCode();}
+		
+		@Override public String toString() { return value.toString();}
+		/*
+		 * private String sqlType;
+		 * 
+		 * @Override public String getSQLTypeName() throws SQLException { return
+		 * sqlType; }
+		 * 
+		 * @Override public void readSQL(SQLInput stream, String typeName) throws
+		 * SQLException { sqlType=typeName; value=stream.readBigDecimal(); }
+		 * 
+		 * @Override public void writeSQL(SQLOutput stream) throws SQLException {
+		 * stream.writeBigDecimal(value); }
+		 */
+	}
+	
+	private PrimaryKey id;
+	public PrimaryKey id() { return id;}
+	public void setId(final PrimaryKey id) { this.id=id;}
+	
+	public void setValue(final String propertyName,final Object value) throws EntitySetterException {
+		try {
+			final Field f=getClass().getDeclaredField(propertyName);
+			f.setAccessible(true);
+			f.set(this, value);
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			throw new EntitySetterException(e);
+		}
+	}
 	
 	@Override
 	public String toString() {
@@ -39,7 +89,7 @@ public abstract class Entity implements Serializable, Cloneable, Comparable<Enti
 	protected StringBuilder getKey(){
 		final Object[] values=entity.definition.EntityInspector.evaluateFields(this);//values of serializable fields
 		final StringBuilder b=new StringBuilder();
-		Arrays.asList(values).forEach(x->b.append(x.toString()));
+		Arrays.asList(values).forEach(x->b.append(x==null?"":x.toString()));
 		return b;
 	}
 	

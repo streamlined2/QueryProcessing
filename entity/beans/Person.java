@@ -5,7 +5,7 @@ import entity.definition.Entity;
 public class Person extends Entity {
 	
 	public enum Sex {FEMALE,MALE};
-
+	
 	private final String firstname;
 	public String firstname() { return firstname;}
 
