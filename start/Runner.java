@@ -25,8 +25,10 @@ import entity.definition.EntitySource;
 import entity.persistence.BasicEntityManager;
 import entity.persistence.EntityManager;
 import query.definition.Query;
+import query.definition.result.AbstractQueryResult;
 import query.exceptions.QueryException;
 import query.processor.BasicQueryProcessor;
+import query.processor.SQLServerProcessor;
 import query.definition.AggregationProperty;
 import query.definition.Entry;
 
@@ -48,17 +50,38 @@ public class Runner {
 				  
 				  EntityManager eM=new BasicEntityManager(conn);
 				  
-				  Product productA=new Product(LocalDateTime.now(),"Receiver",BigDecimal.valueOf(899),Product.Status.IN_STOCK);//Date.valueOf(LocalDate.now())
+				  eM.persist(new Product(LocalDateTime.now(),"Apple",BigDecimal.valueOf(5),Product.Status.IN_STOCK));
+				  eM.persist(new Product(LocalDateTime.now(),"Orange",BigDecimal.valueOf(4),Product.Status.RUNNING_LOW));
+				  eM.persist(new Product(LocalDateTime.now(),"Tomato",BigDecimal.valueOf(3),Product.Status.IN_STOCK));
+				  eM.persist(new Product(LocalDateTime.now(),"Pear",BigDecimal.valueOf(7),Product.Status.OUT_OF_STOCK));
+				  eM.persist(new Product(LocalDateTime.now(),"Banana",BigDecimal.valueOf(8),Product.Status.RUNNING_LOW));
+				  eM.persist(new Product(LocalDateTime.now(),"Cucumber",BigDecimal.valueOf(6),Product.Status.IN_STOCK));
+				  eM.persist(new Product(LocalDateTime.now(),"Tangerine",BigDecimal.valueOf(5),Product.Status.IN_STOCK));
+				  eM.persist(new Product(LocalDateTime.now(),"Lemon",BigDecimal.valueOf(4),Product.Status.IN_STOCK));
+				  eM.persist(new Product(LocalDateTime.now(),"Potato",BigDecimal.valueOf(1),Product.Status.RUNNING_LOW));
+				  eM.persist(new Product(LocalDateTime.now(),"Onion",BigDecimal.valueOf(2),Product.Status.IN_STOCK));
+				  eM.persist(new Product(LocalDateTime.now(),"Carrot",BigDecimal.valueOf(3),Product.Status.OUT_OF_STOCK));
+				  eM.persist(new Product(LocalDateTime.now(),"Onion",BigDecimal.valueOf(2),Product.Status.RUNNING_LOW));
+				  Product productA=new Product(LocalDateTime.now(),"Watermelon",BigDecimal.valueOf(4),Product.Status.IN_STOCK);
 				  eM.persist(productA);
-				  System.out.println(productA);
+				  //System.out.println(productA);
 				  
-				  productA.setValue("name", "Transmitter");
+				  productA.setValue("name", "Melon");
 				  eM.merge(productA);
-				  System.out.println(productA);
+				  //System.out.println(productA);
 				  
 				  Optional<Product> productB=eM.find(Product.class,productA.id());
-				  System.out.println(productB);
+				  //System.out.println(productB);
 				  
+				  final Query query1=new Query();
+				  final Entry<Product> productEntry=query1.addEntry(Product.class);
+				  productEntry.select("name","price","status");
+					
+				  final SQLServerProcessor sqlProcessor=new SQLServerProcessor(conn,query1);
+				  System.out.printf("\n1'st SQL statement: %s\n",query1.getSQLStatement());
+				  final AbstractQueryResult query1Result=sqlProcessor.fetch();
+				  System.out.printf("Products: fetched %d record(s)\n%s\n",query1Result.getTupleCount(),query1Result);
+					  
 				  eM.remove(Product.class,productA.id());
 				  System.out.println(eM.removeAll(Product.class));
 					  
@@ -182,7 +205,7 @@ public class Runner {
 
 		//System.out.println(q1);
 		
-		System.out.printf("Query #1> join person/location/country entities, select fields, filter tuples and order result: \n%s\n\n",new BasicQueryProcessor(q1).fetch(data));	
+		System.out.printf("Query #1> join person/location/country entities, select fields, filter tuples and order result: \n%s\n\n",new BasicQueryProcessor(q1,data).fetch());	
 
 		final Query q2=new Query();
 		final Entry<Country> c=q2.addEntry(Country.class);
@@ -194,7 +217,7 @@ public class Runner {
 		l.aggregate(Location::area,AggregationProperty.DOUBLE_AVERAGE);
 		//c.sortBy(Country::name);
 		c.groupBy(Country::name);
-		System.out.printf("Query #2> fetch count and population total, area total and average for each country:\n%s\n\n",new BasicQueryProcessor(q2).fetch(data));
+		System.out.printf("Query #2> fetch count and population total, area total and average for each country:\n%s\n\n",new BasicQueryProcessor(q2,data).fetch());
 		
 	}
 

@@ -1,7 +1,8 @@
 package query.processor;
 
 import query.definition.Query;
-import query.definition.result.QueryResult;
+import query.definition.result.AbstractQueryResult;
+import query.definition.result.BasicQueryResult;
 import entity.definition.DataSource;
 import query.definition.Entry;
 import query.exceptions.NoDataException;
@@ -18,7 +19,7 @@ public interface QueryProcessor {
 	
 	public Query getQuery();
 	
-	public QueryResult fetch(final DataSource dataSource) throws QueryException;
+	public AbstractQueryResult fetch() throws QueryException;
 	
 	public default void checkIfAllNecessaryDataSupplied(final DataSource dataSource) throws NoDataException {
 		for(final Entry<?> entry:getQuery()) {

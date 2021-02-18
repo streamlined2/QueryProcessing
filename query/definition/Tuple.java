@@ -18,6 +18,10 @@ public class Tuple implements Comparable<Tuple>{
 		this.values=new Object[dimension];
 	}
 	
+	public int getDimension() {
+		return values.length;
+	}
+	
 	public void setOrderKey(final StringBuilder orderKey) {
 		this.orderKey=orderKey;		
 	}

@@ -48,7 +48,7 @@ public class GetterProperty<T extends Entity, R> implements Property<R> {
 	}
 	
 	@Override public String toString() {
-		return method.toString();
+		return method.getName();
 	}
 	
 }

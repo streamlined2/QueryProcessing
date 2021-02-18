@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import entity.beans.Product;
 import entity.definition.Entity;
 import entity.definition.EntityInspector;
 import entity.definition.Entity.PrimaryKey;
@@ -30,6 +29,11 @@ import query.exceptions.NoPrimaryKeyException;
 import query.exceptions.QueryException;
 import query.exceptions.RemoveFailedException;
 
+/**
+ * Simple entity manager implementation
+ * @author Engine
+ *
+ */
 public class BasicEntityManager implements EntityManager {
 	
 	private final Connection connection;
@@ -223,7 +227,7 @@ public class BasicEntityManager implements EntityManager {
 		int k=0; for(final ObjectStreamField field:entityFields) paramTypes[k++]=field.getType();
 
 		try {
-			final Constructor<E> construct=entityClass.getDeclaredConstructor(paramTypes);//constructor must have parameters sorted alphabetically
+			final Constructor<E> construct=entityClass.getDeclaredConstructor(paramTypes);//constructor must have parameters sorted alphabetically to conform with EntityInspector.getSerializableFields
 			final E entity=construct.newInstance(args);
 			entity.setId(primaryKey);
 			return entity;
@@ -239,8 +243,7 @@ public class BasicEntityManager implements EntityManager {
 		}else if(BigDecimal.class.isAssignableFrom(osField.getType())) {
 			result=BigDecimal.valueOf(((Number)object).longValue());
 		}else if(java.sql.Date.class.isAssignableFrom(osField.getType())) {
-			LocalDateTime dateTime=(LocalDateTime)object;
-			result=Date.valueOf(dateTime.toLocalDate());
+			result=Date.valueOf(((LocalDateTime)object).toLocalDate());
 		}
 		return result;
 	}

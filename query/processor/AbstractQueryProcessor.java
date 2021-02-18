@@ -1,31 +1,28 @@
 package query.processor;
 
 import java.io.ObjectStreamField;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiConsumer;
-
 import collections.Searcher;
 import entity.definition.DataSource;
 import entity.definition.Entity;
 import entity.definition.EntityInspector;
-import query.definition.AggregatedData;
 import query.definition.Entry;
 import query.definition.Link;
 import query.definition.QualifiedProperty;
 import query.definition.Query;
-import query.exceptions.EmptyEntryListException;
-import query.exceptions.NoDataException;
 import query.exceptions.NoInitialEntityException;
 import query.exceptions.NoRelationException;
 import query.exceptions.QueryException;
-import query.exceptions.WrongInitialEntityClassException;
-import query.definition.Tuple;
 
+/**
+ * Abstract query processor implementation which keeps query data and builds list of relations between entities
+ * @author Serhii Pylypenko
+ *
+ */
 public abstract class AbstractQueryProcessor implements QueryProcessor {
 
 	protected final Query query;
@@ -147,175 +144,6 @@ public abstract class AbstractQueryProcessor implements QueryProcessor {
 			}
 			return Optional.empty();//no relation found from 'source' to any of 'nodeSet' entries
 		}
-	}
-	
-	//iterate through every entity of query to check and compose tuple data
-	private void enumerateTupleEntities(
-			final Optional<? extends Entity> initialTupleEntity,
-			final DataSource dataSource,
-			final BiConsumer<Optional<? extends Entity>,Entry<? extends Entity>> visitor
-	) throws QueryException {
-		
-		final var relationIterator=relations.iterator();//Iterator<Link<? extends Entity,? extends Entity>> 
-		if(relationIterator.hasNext()) {
-			
-			if(initialTupleEntity.isPresent()) {
-				var tupleEntity=initialTupleEntity;
-	
-				do {
-					final var link=relationIterator.next();////get next relation link //Link<? extends Entity,? extends Entity>
-					final var sourceEntry=link.getSource();
-					final var entitySource=dataSource.getDataFor(sourceEntry);//Optional<EntitySource<? extends Entity>>
-					
-					if(entitySource.isPresent()) {
-						if(entitySource.get().suitable(tupleEntity)) {
-							
-							visitor.accept(tupleEntity, sourceEntry);
-							
-							tupleEntity=link.getRelatedEntity(tupleEntity);
-	
-						}else throw new WrongInitialEntityClassException(entitySource,initialTupleEntity);
-					}else {
-						throw new NoDataException(sourceEntry, dataSource);
-					}
-				}while(relationIterator.hasNext() && tupleEntity.isPresent());
-						
-			}else throw new NoInitialEntityException();
-		}else throw new EmptyEntryListException();
-		
-	}
-	
-	//visits every tuple entity to check if given tuple is acceptable to be included in resulting query 
-	private class AcceptableTupleVisitor<T extends Entity> implements BiConsumer<Optional<T>,Entry<T>>{
-		private boolean acceptable=true;
-		
-		@Override public void accept(final Optional<T> entity, final Entry<T> entry) {
-			acceptable = acceptable && entry.validate(entity.get());
-		}
-		
-		boolean isAcceptable() { return acceptable;}
-	};
-	
-	//constructs visitor and passes it to visit every tuple entity and gather info if entity is acceptable for resulting query
-	protected boolean isTupleAcceptable(
-			final Optional<? extends Entity> initialTupleEntity,
-			final DataSource dataSource) 
-	throws QueryException {
-		
-		final var visitor=new AcceptableTupleVisitor();
-		enumerateTupleEntities(initialTupleEntity, dataSource, visitor);
-		return visitor.isAcceptable();
-	}
-	
-	private class CollectTupleDataVisitor<T extends Entity> implements BiConsumer<Optional<T>,Entry<T>>{
-		
-		private final Tuple tuple;
-		
-		CollectTupleDataVisitor(final int valuesDimension){
-			tuple=new Tuple(valuesDimension);
-		}
-
-		Tuple getTuple() {
-			return tuple;
-		}
-		
-		@Override
-		//extract values of given entity/entry and collect them in 'tuple'
-		public void accept(final Optional<T> entity, final Entry<T> entry) {
-			for(var i=getQuery().selectIterator(entry);i.hasNext();) {//scan entity properties for 'entry'
-				//find column index for property,evaluate and map value to tuple column
-				final var property=i.next();
-				tuple.setValue(i.nextIndex(), property.getProperty().getValue(entity));
-			};
-			
-		}
-		
-	}
-	
-	//constructs visitor and passes it to visit every tuple entity, evaluate property values and collect data and pack to resulting tuple
-	protected Tuple collectTupleData(
-			final Optional<? extends Entity> initialTupleEntity,
-			final DataSource dataSource) 
-	throws QueryException {
-		final var visitor=new CollectTupleDataVisitor(getQuery().selectDimension());
-		enumerateTupleEntities(initialTupleEntity, dataSource, visitor);
-		return visitor.getTuple();
-	}
-	
-	private class ComposeOrderKeyVisitor<T extends Entity> implements BiConsumer<Optional<T>,Entry<T>>{
-		
-		private final Object keys[];
-		
-		ComposeOrderKeyVisitor(final int dimension){
-			keys=new Object[dimension];
-		}
-
-		StringBuilder getOrderKey() {
-			final StringBuilder orderKey=new StringBuilder();
-			Arrays.asList(keys).forEach(x->orderKey.append(x));
-			return orderKey;
-		}
-		
-		@Override
-		//extract values of given entity/entry and compose them as sort key
-		public void accept(final Optional<T> entity, final Entry<T> entry) {
-			for(var i=getQuery().sortGroupByIterator(entry);i.hasNext();) {//scan entity properties for 'entry'
-				//evaluate property of entity and store value as part of future sort key
-				final var property=i.next();
-				keys[i.nextIndex()]=property.getProperty().getValue(entity);
-			};
-			
-		}
-		
-	}
-	
-	//constructs visitor and passes it to compose sort key for every tuple
-	protected StringBuilder composeOrderKey(
-			final Optional<? extends Entity> initialTupleEntity,
-			final DataSource dataSource) 
-	throws QueryException {
-		final var visitor=new ComposeOrderKeyVisitor(getQuery().sortGroupByDimension());
-		enumerateTupleEntities(initialTupleEntity, dataSource, visitor);
-		return visitor.getOrderKey();
-	}
-	
-	private class AggregateEvaluationVisitor<T extends Entity> implements BiConsumer<Optional<T>,Entry<T>>{
-		
-		private final AggregatedData data;
-		
-		AggregateEvaluationVisitor(final int aggregationDimension){
-			this.data=new AggregatedData(aggregationDimension);
-		}
-		
-		AggregatedData getData() {
-			return data;
-		}
-
-		@Override
-		//collect and store aggregated values 
-		public void accept(final Optional<T> entity, final Entry<T> entry) {
-			for(var i=getQuery().aggregationIterator(entry);i.hasNext();) {//scan entity properties for 'entry'
-				//evaluate property of entity and store value as part of future aggregation value
-				final var property=i.next();
-				data.setValue(
-						i.nextIndex(), property.getProperty().getValue(entity));
-			};
-			
-		}
-		
-	}
-	
-	//constructs visitor to gather aggregate values for every group key
-	protected AggregatedData aggregateValues(
-			final Optional<? extends Entity> initialTupleEntity,
-			final DataSource dataSource) 
-	throws QueryException {
-		final var visitor = new AggregateEvaluationVisitor(getQuery().aggregateDimension());
-		enumerateTupleEntities(
-				initialTupleEntity, 
-				dataSource, 
-				visitor);
-		return visitor.getData();
 	}
 	
 }

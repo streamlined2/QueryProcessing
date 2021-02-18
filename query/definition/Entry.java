@@ -32,6 +32,14 @@ public class Entry<T extends Entity> {
 		return this;
 	}
 	
+	public <R> Entry<T> select(
+			@SuppressWarnings("unchecked") final String... getterMethods) {
+		for(final String getter:getterMethods) {
+			query.select(new QualifiedProperty<T,R>(this,getter));
+		}
+		return this;
+	}
+	
 	public <R> Entry<T> sortBy(
 			@SuppressWarnings("unchecked") final Function<T,R>... getters){
 		for(final var getter:getters) {

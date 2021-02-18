@@ -12,8 +12,12 @@ import query.definition.AggregatedData;
 import query.definition.Query;
 import query.definition.Tuple;
 
-//doesn't keep internal order of tuples permanently, but gets ordered finally
-public class OrdinaryQueryResult extends QueryResult implements Sequence<Tuple> {
+/**
+ * Query result for non-grouped queries which doesn't keep internal order of tuples permanently but gets ordered finally
+ * @author Serhii Pylypenko
+ *
+ */
+public class OrdinaryQueryResult extends BasicQueryResult implements Sequence<Tuple> {
 
 	private final List<Tuple> tuples=new ArrayList<>();
 
@@ -58,6 +62,11 @@ public class OrdinaryQueryResult extends QueryResult implements Sequence<Tuple> 
 		final StringJoiner joiner=new StringJoiner("\n");
 		forEach(tuple->joiner.add(tuple.toString()));
 		return joiner.toString();
+	}
+
+	@Override
+	public long getTupleCount() {
+		return tuples.size();
 	}
 
 }

@@ -9,8 +9,12 @@ import query.definition.AggregatedData;
 import query.definition.Query;
 import query.definition.Tuple;
 
-//preordered query result for aggregation
-public class AggregatedQueryResult extends QueryResult {
+/**
+ * Preordered query result for grouped queries and aggregation support
+ * @author Serhii Pylypenko
+ *
+ */
+public class AggregatedQueryResult extends BasicQueryResult {
 	
 	private final SortedMap<Tuple,AggregatedData> tuples=new TreeMap<>();
 
@@ -61,6 +65,11 @@ public class AggregatedQueryResult extends QueryResult {
 				append("=").
 				append(tuples.get(tuple).toString())));
 		return joiner.toString();
+	}
+
+	@Override
+	public long getTupleCount() {
+		return tuples.size();
 	}
 
 }

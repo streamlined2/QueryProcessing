@@ -73,11 +73,19 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 	}
 	
 	private StringBuilder aggregationClause() {
-		return new StringBuilder().append(",").append(selectProperties.empty()?"":",").append(aggregationProperties).append(" ");
+		final StringBuilder b=new StringBuilder();
+		if(!aggregationProperties.empty() && !selectProperties.empty()) {
+			b.append(",");
+		}
+		b.append(aggregationProperties);
+		if(!aggregationProperties.empty()) {
+			b.append(" ");
+		}
+		return b;
 	}
 	
 	private StringBuilder fromClause() {
-		return new StringBuilder().append("FROM ").append(entries).append(entries.empty()?"":"\n");
+		return new StringBuilder().append("FROM ").append(entries);//.append(entries.empty()?"":"\n");
 	}
 	
 	private StringBuilder whereClause() {
@@ -113,9 +121,8 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 		if(!havingByProperies.empty()) b.append("HAVING BY ").append(havingByProperies).append(havingByProperies.empty()?"":"\n");
 		return b;
 	}
-
-	@Override
-	public String toString() {
+	
+	public String getSQLStatement() {
 		return new StringBuilder()
 				.append(selectClause())
 				.append(aggregationClause())
@@ -125,6 +132,11 @@ public class Query implements Iterable<Entry<? extends Entity>>{
 				.append(groupByClause())
 				.append(havingByClause())
 				.toString();
+	}
+
+	@Override
+	public String toString() {
+		return getSQLStatement();
 	}
 
 	@Override

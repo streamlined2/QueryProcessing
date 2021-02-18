@@ -5,6 +5,11 @@ import entity.definition.Entity;
 import entity.definition.Entity.PrimaryKey;
 import query.exceptions.QueryException;
 
+/**
+ * Entity manager interface
+ * @author Serhii Pylypenko
+ *
+ */
 public interface EntityManager {
 	
 	<E extends Entity> Optional<E> find(Class<E> entityClass,PrimaryKey primaryKey) throws QueryException;
