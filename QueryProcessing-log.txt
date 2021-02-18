@@ -1,0 +1,39 @@
+
+1'st SQL statement: SELECT A.NAME,A.PRICE,A.STATUS  FROM PRODUCT AS A  
+Products: fetched 13 record(s)
+[Apple - 5 - IN_STOCK]
+[Orange - 4 - RUNNING_LOW]
+[Tomato - 3 - IN_STOCK]
+[Pear - 7 - OUT_OF_STOCK]
+[Banana - 8 - RUNNING_LOW]
+[Cucumber - 6 - IN_STOCK]
+[Tangerine - 5 - IN_STOCK]
+[Lemon - 4 - IN_STOCK]
+[Potato - 1 - RUNNING_LOW]
+[Cabbage - 2 - IN_STOCK]
+[Carrot - 3 - OUT_OF_STOCK]
+[Onion - 2 - RUNNING_LOW]
+[Melon - 4 - IN_STOCK]
+
+2'nd SQL statement: SELECT A.NAME,A.PRICE,A.STATUS,A.CREATED_AT,SUM(B.QUANTITY)  FROM PRODUCT AS A INNER JOIN ORDERITEM AS B  ON(B.PRODUCT=A.ID) GROUP BY A.NAME ORDER BY SUM(B.QUANTITY) DESC 
+Products: fetched 13 record(s)
+[Melon - 4 - IN_STOCK - 2021-02-18T08:54:26 - 17]
+[Banana - 8 - RUNNING_LOW - 2021-02-18T08:54:25 - 15]
+[Cucumber - 6 - IN_STOCK - 2021-02-18T08:54:25 - 13]
+[Tangerine - 5 - IN_STOCK - 2021-02-18T08:54:25 - 13]
+[Carrot - 3 - OUT_OF_STOCK - 2021-02-18T08:54:25 - 12]
+[Onion - 2 - RUNNING_LOW - 2021-02-18T08:54:25 - 12]
+[Orange - 4 - RUNNING_LOW - 2021-02-18T08:54:25 - 8]
+[Lemon - 4 - IN_STOCK - 2021-02-18T08:54:25 - 7]
+[Pear - 7 - OUT_OF_STOCK - 2021-02-18T08:54:25 - 6]
+[Potato - 1 - RUNNING_LOW - 2021-02-18T08:54:25 - 6]
+[Cabbage - 2 - IN_STOCK - 2021-02-18T08:54:25 - 6]
+[Apple - 5 - IN_STOCK - 2021-02-18T08:54:25 - 5]
+[Tomato - 3 - IN_STOCK - 2021-02-18T08:54:25 - 4]
+Please enter password to purge data:
+pass
+
+13
+26
+0
+Data were purged successfully.
