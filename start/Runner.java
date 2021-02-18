@@ -11,7 +11,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Year;
+import java.util.Optional;
 import java.util.Properties;
 import entity.beans.Country;
 import entity.beans.Location;
@@ -46,14 +48,16 @@ public class Runner {
 				  
 				  EntityManager eM=new BasicEntityManager(conn);
 				  
-				  Product productA=new Product("Receiver",BigDecimal.valueOf(899),Product.Status.IN_STOCK,Date.valueOf(LocalDate.now()));
+				  Product productA=new Product(LocalDateTime.now(),"Receiver",BigDecimal.valueOf(899),Product.Status.IN_STOCK);//Date.valueOf(LocalDate.now())
 				  eM.persist(productA);
 				  System.out.println(productA);
 				  
-				  //Product productA=new Product("Transmitter",BigDecimal.valueOf(900),Product.Status.OUT_OF_STOCK,Date.valueOf(LocalDate.now()));
 				  productA.setValue("name", "Transmitter");
 				  eM.merge(productA);
 				  System.out.println(productA);
+				  
+				  Optional<Product> productB=eM.find(Product.class,productA.id());
+				  System.out.println(productB);
 				  
 				  eM.remove(Product.class,productA.id());
 				  System.out.println(eM.removeAll(Product.class));

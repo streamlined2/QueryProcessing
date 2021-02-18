@@ -1,6 +1,8 @@
 package entity.persistence;
 
 import java.io.ObjectStreamField;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
@@ -8,19 +10,22 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Set;
-import java.util.function.Predicate;
+import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
+import entity.beans.Product;
 import entity.definition.Entity;
 import entity.definition.EntityInspector;
 import entity.definition.Entity.PrimaryKey;
 import entity.definition.EntityInspector.EntityDefinition;
 import query.exceptions.ConnectionCommitModeException;
 import query.exceptions.EmptyEntityPropertyList;
+import query.exceptions.EntityCreationFailedException;
 import query.exceptions.EntityMergeFailedException;
 import query.exceptions.EntityPersistFailedException;
 import query.exceptions.EntityRemoveFailedException;
+import query.exceptions.EntitySeekFailedException;
 import query.exceptions.NoPrimaryKeyException;
 import query.exceptions.QueryException;
 import query.exceptions.RemoveFailedException;
@@ -59,12 +64,6 @@ public class BasicEntityManager implements EntityManager {
 				toLowerCase();
 	}
 	
-	@Override
-	public <E extends Entity> E find(final Class<E> entityClass,final PrimaryKey primaryKey) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	private PrimaryKey retrievePrimaryKey(final Statement statement) throws QueryException {
 		try(final ResultSet keys=statement.getGeneratedKeys()){
 			if(keys.next()) return new PrimaryKey(keys.getBigDecimal(1));
@@ -100,7 +99,7 @@ public class BasicEntityManager implements EntityManager {
 			}else if(value instanceof BigDecimal aDecimal) {
 				statement.setBigDecimal(index,aDecimal);
 			}else if(value instanceof Enum anEnum) {
-				statement.setInt(index,anEnum.ordinal());
+				statement.setString(index,anEnum.name());
 			}else if(value instanceof Date aDate) {
 				statement.setDate(index, aDate);
 			}else {
@@ -213,6 +212,90 @@ public class BasicEntityManager implements EntityManager {
 				throw new RemoveFailedException(e1);
 			}
 			throw new RemoveFailedException(e);
+		}
+	}
+
+	private <E extends Entity> E createEntity(final Class<E> entityClass,final PrimaryKey primaryKey,final Object[] args) throws QueryException {
+
+		final ObjectStreamField[] entityFields=EntityInspector.getSerializableFields(entityClass);
+		final Class<?> paramTypes[]=new Class<?>[entityFields.length];
+
+		int k=0; for(final ObjectStreamField field:entityFields) paramTypes[k++]=field.getType();
+
+		try {
+			final Constructor<E> construct=entityClass.getDeclaredConstructor(paramTypes);//constructor must have parameters sorted alphabetically
+			final E entity=construct.newInstance(args);
+			entity.setId(primaryKey);
+			return entity;
+		} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			throw new EntityCreationFailedException(e);
+		}
+	}
+	
+	private <T extends Enum<T>> Object convertArgument(final ObjectStreamField osField, final Object object) {
+		Object result=object;
+		if(Enum.class.isAssignableFrom(osField.getType())) {
+			result=Enum.<T>valueOf((Class<T>)osField.getType(),(String)object);
+		}else if(BigDecimal.class.isAssignableFrom(osField.getType())) {
+			result=BigDecimal.valueOf(((Number)object).longValue());
+		}else if(java.sql.Date.class.isAssignableFrom(osField.getType())) {
+			LocalDateTime dateTime=(LocalDateTime)object;
+			result=Date.valueOf(dateTime.toLocalDate());
+		}
+		return result;
+	}
+
+	private <E extends Entity> Object[] collectArguments(final Class<E> entityClass,final ResultSet rs) throws QueryException {
+		final ObjectStreamField[] entityFields=EntityInspector.getSerializableFields(entityClass);
+		final Object[] args=new Object[entityFields.length];
+		try {
+			for(int k=0;k<entityFields.length;k++) {
+				args[k]=convertArgument(entityFields[k],rs.getObject(k+1));
+			}
+		} catch (SQLException e) {
+			throw new EntityCreationFailedException(e);
+		}
+		return args;
+	}
+	
+	private <E extends Entity> E createEntityFromResultSet(final Class<E> entityClass,final PrimaryKey primaryKey,final ResultSet rs) throws QueryException {
+		return createEntity(
+				entityClass,
+				primaryKey,
+				collectArguments(entityClass,rs));
+	}
+
+	private static StringBuilder getEntityProperties(final Class<? extends Entity> entityClass) {
+		final ObjectStreamField[] entityFields=EntityInspector.getSerializableFields(entityClass);
+		final StringBuilder propertyList=new StringBuilder();
+		if(entityFields.length>0) {
+			propertyList.append(mapPropertyToAttribute(entityFields[0].getName()));
+			for(int k=1;k<entityFields.length;k++)
+				propertyList.append(",").append(mapPropertyToAttribute(entityFields[k].getName()));
+		}
+		return propertyList;
+	}
+
+	@Override
+	public <E extends Entity> Optional<E> find(final Class<E> entityClass,final PrimaryKey primaryKey) throws QueryException {
+		final String query=
+				String.format("SELECT %s FROM %s WHERE %s=?", 
+						getEntityProperties(entityClass),
+						mapEntityToTable(entityClass),
+						EntityDefinition.getPrimaryKeyName());
+		try(final PreparedStatement statement=connection.prepareStatement(query)) {
+			primaryKey.setPrimaryKeyInStatement(statement, 1);
+			try(final ResultSet rs=statement.executeQuery()) {
+				if(rs.next()) {
+					final E entity=createEntityFromResultSet(entityClass,primaryKey,rs);
+					if(rs.next()) throw new EntitySeekFailedException("found extra entity for primary key %s",primaryKey.toString());
+					else return Optional.of(entity);
+				}else {
+					return Optional.empty();//throw new EntitySeekFailedException("no entity found for primary key %s",primaryKey.toString());
+				}
+			}
+		} catch (SQLException e) {
+			throw new EntitySeekFailedException(e);
 		}
 	}
 
