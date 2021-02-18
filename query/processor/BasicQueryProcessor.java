@@ -35,11 +35,11 @@ public class BasicQueryProcessor extends AbstractQueryProcessor {
 	public BasicQueryResult fetch() throws QueryException {
 		
 		checkIfAllNecessaryDataSupplied(dataSource);
-		checkIfOrderGroupClausesCompatible();
+		//checkIfOrderGroupClausesCompatible();
 		
 		buildListOfRelations();
 
-		final BasicQueryResult result=BasicQueryResult.createQueryResult(getQuery());
+		final BasicQueryResult result=BasicQueryResult.createQueryResult(getQuery(),this);
 
 		//find entitySource for initial entity of relation list
 		final var initialEntitySource=dataSource.getDataFor(
@@ -171,7 +171,7 @@ public class BasicQueryProcessor extends AbstractQueryProcessor {
 		@Override
 		//extract values of given entity/entry and compose them as sort key
 		public void accept(final Optional<T> entity, final Entry<T> entry) {
-			for(var i=getQuery().sortGroupByIterator(entry);i.hasNext();) {//scan entity properties for 'entry'
+			for(var i=getQuery().sortByIterator(entry);i.hasNext();) {//scan entity properties for 'entry'
 				//evaluate property of entity and store value as part of future sort key
 				final var property=i.next();
 				keys[i.nextIndex()]=property.getProperty().getValue(entity);
@@ -186,7 +186,7 @@ public class BasicQueryProcessor extends AbstractQueryProcessor {
 			final Optional<? extends Entity> initialTupleEntity,
 			final DataSource dataSource) 
 	throws QueryException {
-		final var visitor=new ComposeOrderKeyVisitor(getQuery().sortGroupByDimension());
+		final var visitor=new ComposeOrderKeyVisitor(getQuery().sortByDimension());
 		enumerateTupleEntities(initialTupleEntity, dataSource, visitor);
 		return visitor.getOrderKey();
 	}

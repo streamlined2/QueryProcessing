@@ -8,6 +8,7 @@ import java.util.TreeMap;
 import query.definition.AggregatedData;
 import query.definition.Query;
 import query.definition.Tuple;
+import query.processor.AbstractQueryProcessor;
 
 /**
  * Preordered query result for grouped queries and aggregation support
@@ -18,8 +19,8 @@ public class AggregatedQueryResult extends BasicQueryResult {
 	
 	private final SortedMap<Tuple,AggregatedData> tuples=new TreeMap<>();
 
-	public AggregatedQueryResult(final Query query) {
-		super(query);
+	public AggregatedQueryResult(final Query query,final AbstractQueryProcessor processor) {
+		super(query,processor);
 	}
 
 	//browse list of aggregated attribute properties and combine accumulated earlier data and new portion

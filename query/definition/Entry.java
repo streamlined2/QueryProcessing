@@ -2,7 +2,6 @@ package query.definition;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -24,6 +23,10 @@ public class Entry<T extends Entity> {
 		predicates=new PredicateList<T>();
 	}
 	
+	public Iterable<Predicate<T>> predicates(){
+		return predicates;
+	}
+	
 	public <R> Entry<T> select(
 			@SuppressWarnings("unchecked") final Function<T,R>... getters) {
 		for(final Function<T,R> getter:getters) {
@@ -41,9 +44,49 @@ public class Entry<T extends Entity> {
 	}
 	
 	public <R> Entry<T> sortBy(
+			@SuppressWarnings("unchecked") final String... getters){
+		for(final var getter:getters) {
+			query.sortBy(new OrderProperty<T, R>(new QualifiedProperty<>(this, getter),OrderProperty.OrderKind.ASCENDING));
+		}
+		return this;
+	}
+	
+	public <R> Entry<T> sortBy(
 			@SuppressWarnings("unchecked") final Function<T,R>... getters){
 		for(final var getter:getters) {
-			query.sortBy(new QualifiedProperty<T, R>(this, getter));
+			query.sortBy(new OrderProperty<T, R>(new QualifiedProperty<>(this, getter),OrderProperty.OrderKind.ASCENDING));
+		}
+		return this;
+	}
+	
+	public <R> Entry<T> sortBy(
+			@SuppressWarnings("unchecked") final QualifiedProperty<T,R>... qualifiedProperties){
+		for(final var qualifiedProperty:qualifiedProperties) {
+			query.sortBy(new OrderProperty<T, R>(qualifiedProperty,OrderProperty.OrderKind.ASCENDING));
+		}
+		return this;
+	}
+	
+	public <R> Entry<T> sortByDesc(
+			@SuppressWarnings("unchecked") final String... getters){
+		for(final var getter:getters) {
+			query.sortBy(new OrderProperty<T, R>(new QualifiedProperty<>(this, getter),OrderProperty.OrderKind.DESCENDING));
+		}
+		return this;
+	}
+	
+	public <R> Entry<T> sortByDesc(
+			@SuppressWarnings("unchecked") final Function<T,R>... getters){
+		for(final var getter:getters) {
+			query.sortBy(new OrderProperty<T, R>(new QualifiedProperty<>(this, getter),OrderProperty.OrderKind.DESCENDING));
+		}
+		return this;
+	}
+	
+	public <R> Entry<T> sortByDesc(
+			@SuppressWarnings("unchecked") final QualifiedProperty<T,R>... qualifiedProperties){
+		for(final var qualifiedProperty:qualifiedProperties) {
+			query.sortBy(new OrderProperty<T, R>(qualifiedProperty,OrderProperty.OrderKind.DESCENDING));
 		}
 		return this;
 	}
@@ -55,8 +98,25 @@ public class Entry<T extends Entity> {
 		return this;
 	}
 	
+	public <R> Entry<T> groupBy(@SuppressWarnings("unchecked") final String... getters){
+		for(final var getter:getters) {
+			query.groupBy(new QualifiedProperty<T,R>(this,getter));
+		}
+		return this;
+	}
+	
 	public <R extends Numeric> Entry<T> aggregate(final Function<T,R> getter,final Aggregator<? extends Numeric,R> aggregator){
 		query.aggregate(new AggregationProperty<T,R>(this,getter,aggregator));
+		return this;
+	}
+	
+	public <R extends Numeric> Entry<T> aggregate(final String getter,final Aggregator<? extends Numeric,R> aggregator){
+		query.aggregate(new AggregationProperty<T,R>(this,getter,aggregator));
+		return this;
+	}
+	
+	public <R extends Numeric> Entry<T> aggregate(final AggregationProperty<T,R> aggregationProperty){
+		query.aggregate(aggregationProperty);
 		return this;
 	}
 	
@@ -89,12 +149,6 @@ public class Entry<T extends Entity> {
 		return valid;
 	}
 	
-	String predicateClause() {
-		final StringJoiner joiner=new StringJoiner(" and ");
-		predicates.forEach((Predicate<? extends Entity> x)->joiner.add(x.toString()));
-		return joiner.toString();
-	}
-	
 	@Override public int hashCode() {
 		return Objects.hash(entityClass.hashCode(),getAlias());
 	}
@@ -105,7 +159,4 @@ public class Entry<T extends Entity> {
 				entityClass.equals(entry.entityClass):false;
 	}
 	
-	@Override public String toString() {
-		return entityClass.getSimpleName();
-	}
 }

@@ -11,6 +11,7 @@ import collections.sort.Sequence;
 import query.definition.AggregatedData;
 import query.definition.Query;
 import query.definition.Tuple;
+import query.processor.AbstractQueryProcessor;
 
 /**
  * Query result for non-grouped queries which doesn't keep internal order of tuples permanently but gets ordered finally
@@ -21,8 +22,8 @@ public class OrdinaryQueryResult extends BasicQueryResult implements Sequence<Tu
 
 	private final List<Tuple> tuples=new ArrayList<>();
 
-	public OrdinaryQueryResult(final Query query) {
-		super(query);
+	public OrdinaryQueryResult(final Query query,final AbstractQueryProcessor processor) {
+		super(query,processor);
 	}
 
 	@Override

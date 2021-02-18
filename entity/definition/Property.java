@@ -4,6 +4,7 @@ import java.util.Optional;
 
 public interface Property<R> {
 
-	public R getValue(final Optional<? extends Entity> entity);
+	R getValue(final Optional<? extends Entity> entity);
+	default String getName() { return "";}
 	
 }

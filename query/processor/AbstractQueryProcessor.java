@@ -10,6 +10,7 @@ import collections.Searcher;
 import entity.definition.DataSource;
 import entity.definition.Entity;
 import entity.definition.EntityInspector;
+import entity.definition.EntityInspector.EntityDefinition;
 import query.definition.Entry;
 import query.definition.Link;
 import query.definition.QualifiedProperty;

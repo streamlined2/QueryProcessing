@@ -1,11 +1,9 @@
 package entity.beans;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.time.LocalDateTime;
 
 import entity.definition.Entity;
-import entity.definition.EntityInspector;
 
 public class Product extends Entity {
 	

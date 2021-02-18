@@ -30,6 +30,10 @@ public class EntryList implements Iterable<Entry<? extends Entity>> {
 		return entries.size();
 	}
 	
+	public boolean contains(final Entry<? extends Entity> entry) {
+		return entries.contains(entry);
+	}
+	
 	private Character getNextAlias() {
 		final int nextIndex=entries.size();
 		if(nextIndex<('Z'-'A'+1)) {
@@ -39,13 +43,6 @@ public class EntryList implements Iterable<Entry<? extends Entity>> {
 		}
 	}
 	
-	@Override
-	public String toString() {
-		final StringJoiner joiner=new StringJoiner(",");
-		entries.forEach((Entry<? extends Entity> x)->joiner.add(x.toString()+" AS "+x.getAlias()));
-		return joiner.toString();
-	}
-
 	@Override
 	public Iterator<Entry<? extends Entity>> iterator() {
 		return entries.iterator();

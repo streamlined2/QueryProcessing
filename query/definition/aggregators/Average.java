@@ -62,4 +62,8 @@ public class Average<T extends Numeric> extends Aggregator<AverageNumericData<T>
 		return (AverageNumericData<T>)total.add(value);
 	}
 
+	@Override public String getName() { 
+		return "AVG";
+	}
+	
 }

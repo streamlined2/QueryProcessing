@@ -3,6 +3,7 @@ package query.definition.result;
 import query.definition.AggregatedData;
 import query.definition.Query;
 import query.definition.Tuple;
+import query.processor.AbstractQueryProcessor;
 
 /**
  * Represents result of query processing without any support of SQL server
@@ -12,8 +13,8 @@ import query.definition.Tuple;
 
 public abstract class BasicQueryResult extends AbstractQueryResult {
 	
-	protected BasicQueryResult(final Query query){
-		super(query);
+	protected BasicQueryResult(final Query query,final AbstractQueryProcessor processor){
+		super(query,processor);
 	}
 	
 	private static boolean needAggregation(final Query query) {
@@ -21,10 +22,10 @@ public abstract class BasicQueryResult extends AbstractQueryResult {
 	}
 	
 	//factory method for proper query result construction depending on query type
-	public static BasicQueryResult createQueryResult(final Query query) {
+	public static BasicQueryResult createQueryResult(final Query query,final AbstractQueryProcessor processor) {
 		return needAggregation(query)?
-					new AggregatedQueryResult(query):
-						new OrdinaryQueryResult(query);
+					new AggregatedQueryResult(query,processor):
+						new OrdinaryQueryResult(query,processor);
 	}
 	
 	//process new tuple and save extracted info in query result

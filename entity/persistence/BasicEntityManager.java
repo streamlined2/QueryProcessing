@@ -11,6 +11,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -26,7 +28,9 @@ import query.exceptions.EntityPersistFailedException;
 import query.exceptions.EntityRemoveFailedException;
 import query.exceptions.EntitySeekFailedException;
 import query.exceptions.NoPrimaryKeyException;
+import query.exceptions.NullForeignKeyException;
 import query.exceptions.QueryException;
+import query.exceptions.ReferencedEntityShouldBePresentInPoolException;
 import query.exceptions.RemoveFailedException;
 
 /**
@@ -34,8 +38,27 @@ import query.exceptions.RemoveFailedException;
  * @author Engine
  *
  */
-public class BasicEntityManager implements EntityManager {
+public class BasicEntityManager implements EntityManager, EntityToDBMapper {
 	
+	private class EntityPool {
+		private Map<Entity.PrimaryKey,Entity> stash=new HashMap<>();
+		
+		Optional<? extends Entity> get(final Entity.PrimaryKey key){
+			return stash.containsKey(key)?
+					Optional.of(stash.get(key)):
+						Optional.empty();
+		}
+		
+		void add(final Entity entity) {
+			stash.put(entity.id(),entity);
+		}
+		
+		void remove(final Entity.PrimaryKey key) {
+			stash.remove(key);
+		}
+	}
+	
+	private final EntityPool pool=new EntityPool();
 	private final Connection connection;
 	
 	public BasicEntityManager(final Connection connection) throws QueryException {
@@ -52,32 +75,36 @@ public class BasicEntityManager implements EntityManager {
 		}
 	}
 	
-	private static String mapEntityToTable(final Class<? extends Entity> eClass) {
+	public Connection getConnection() {
+		return connection;
+	}
+	
+	public String mapEntityToTable(final Class<? extends Entity> eClass) {
 		return eClass.getSimpleName().toUpperCase();
 	}
 	
-	private static String mapEntityToTable(final Entity e) {
-		return mapEntityToTable(e.getClass());
-	}
-	
-	private static String mapPropertyToAttribute(final String propertyName) {
+	public String mapPropertyToAttribute(final String propertyName) {
 		return Pattern.
 				compile("[A-Z]").
 				matcher(propertyName).
 				replaceAll(r->"_"+r.group()).
-				toLowerCase();
+				toUpperCase();
 	}
 	
-	private PrimaryKey retrievePrimaryKey(final Statement statement) throws QueryException {
+	@Override
+	public void close() throws Exception {
+	}
+
+	private void retrievePrimaryKey(final Entity entity,final Statement statement) throws QueryException {
 		try(final ResultSet keys=statement.getGeneratedKeys()){
-			if(keys.next()) return new PrimaryKey(keys.getBigDecimal(1));
+			if(keys.next()) entity.setId(new PrimaryKey(entity.getClass(),keys.getBigDecimal(1)));
 			else throw new NoPrimaryKeyException("no primary key retrieved");
 		} catch (SQLException e) {
 			throw new NoPrimaryKeyException(e);
 		}
 	}
 	
-	private static String getInsertQuery(final Entity entity) throws QueryException {
+	private String getInsertQuery(final Entity entity) throws QueryException {
 		final StringBuilder query=
 				new StringBuilder("INSERT INTO ").append(mapEntityToTable(entity)).append(" (");
 		final ObjectStreamField[] entityFields=EntityInspector.getSerializableFields(entity.getClass());
@@ -119,7 +146,14 @@ public class BasicEntityManager implements EntityManager {
 		final Object[] values=EntityInspector.evaluateFields(entity,entityFields);
 		int k=0;
 		for(final ObjectStreamField field:entityFields) {
-			setQueryParameter(statement,k+1,values[k++]);
+			if(EntityDefinition.isForeignKeyReference(field)) {
+				final Entity ref=(Entity)values[k];
+				if(ref!=null) setQueryParameter(statement,k+1,ref.id().internalValue());
+				else throw new NullForeignKeyException("foreign key %s should be set before 'persist' operation",field.getName());
+			}else {
+				setQueryParameter(statement,k+1,values[k]);
+			}
+			k++;
 		}
 		return k;
 	}
@@ -132,8 +166,9 @@ public class BasicEntityManager implements EntityManager {
 						new String[] {EntityDefinition.getPrimaryKeyName()})){
 			setQueryParameters(statement, entity);
 			statement.executeUpdate();
-			entity.setId(retrievePrimaryKey(statement));
+			retrievePrimaryKey(entity,statement);
 			connection.commit();
+			pool.add(entity);
 		} catch (SQLException | QueryException e) {
 			try {
 				connection.rollback();
@@ -144,7 +179,7 @@ public class BasicEntityManager implements EntityManager {
 		}
 	}
 
-	private static String getUpdateQuery(final Entity entity) throws QueryException {
+	private String getUpdateQuery(final Entity entity) throws QueryException {
 		final StringBuilder query=
 				new StringBuilder("UPDATE ").append(mapEntityToTable(entity)).append(" SET ");
 		final ObjectStreamField[] entityFields=EntityInspector.getSerializableFields(entity.getClass());
@@ -171,6 +206,7 @@ public class BasicEntityManager implements EntityManager {
 			entity.id().setPrimaryKeyInStatement(statement,lastArgIndex+1);
 			statement.executeUpdate();
 			connection.commit();
+			pool.add(entity);
 		} catch (SQLException | QueryException e) {
 			try {
 				connection.rollback();
@@ -192,6 +228,7 @@ public class BasicEntityManager implements EntityManager {
 			final int count=statement.executeUpdate();
 			if(count!=1) throw new EntityRemoveFailedException();
 			connection.commit();
+			//pool.remove(key);
 		}catch(SQLException | QueryException e) {
 			try {
 				connection.rollback();
@@ -236,9 +273,16 @@ public class BasicEntityManager implements EntityManager {
 		}
 	}
 	
-	private <T extends Enum<T>> Object convertArgument(final ObjectStreamField osField, final Object object) {
+	private <E extends Entity,T extends Enum<T>> Object convertArgument(
+			final Class<E> entityClass,final ObjectStreamField osField, final Object object) throws QueryException {
 		Object result=object;
-		if(Enum.class.isAssignableFrom(osField.getType())) {
+		if(EntityDefinition.isForeignKeyReference(osField)) {
+			PrimaryKey key=new PrimaryKey((Class<? extends Entity>) osField.getType(),(Integer)object);
+			Optional<? extends Entity> entity=pool.get(key);
+			if(entity.isPresent()) {
+				result=entity.get();
+			}else throw new ReferencedEntityShouldBePresentInPoolException("referenced entity for type %s and key %d should be present in entity pool",key.getEntityClass(),key.internalValue());
+		}else if(Enum.class.isAssignableFrom(osField.getType())) {
 			result=Enum.<T>valueOf((Class<T>)osField.getType(),(String)object);
 		}else if(BigDecimal.class.isAssignableFrom(osField.getType())) {
 			result=BigDecimal.valueOf(((Number)object).longValue());
@@ -253,7 +297,7 @@ public class BasicEntityManager implements EntityManager {
 		final Object[] args=new Object[entityFields.length];
 		try {
 			for(int k=0;k<entityFields.length;k++) {
-				args[k]=convertArgument(entityFields[k],rs.getObject(k+1));
+				args[k]=convertArgument(entityClass,entityFields[k],rs.getObject(k+1));
 			}
 		} catch (SQLException e) {
 			throw new EntityCreationFailedException(e);
@@ -268,7 +312,7 @@ public class BasicEntityManager implements EntityManager {
 				collectArguments(entityClass,rs));
 	}
 
-	private static StringBuilder getEntityProperties(final Class<? extends Entity> entityClass) {
+	private StringBuilder getEntityProperties(final Class<? extends Entity> entityClass) {
 		final ObjectStreamField[] entityFields=EntityInspector.getSerializableFields(entityClass);
 		final StringBuilder propertyList=new StringBuilder();
 		if(entityFields.length>0) {

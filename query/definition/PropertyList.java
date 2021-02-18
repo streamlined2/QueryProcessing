@@ -4,12 +4,10 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.StringJoiner;
-
 import collections.FilteredIterator;
 import entity.definition.Entity;
 
-class PropertyList implements Iterable<QualifiedProperty<? extends Entity,?>>{
+public class PropertyList implements Iterable<QualifiedProperty<? extends Entity,?>>{
 	private List<QualifiedProperty<? extends Entity,?>> properties=new LinkedList<>();
 	
 	void addProperty(final QualifiedProperty<? extends Entity,?> property) {
@@ -29,13 +27,6 @@ class PropertyList implements Iterable<QualifiedProperty<? extends Entity,?>>{
 	}
 	
 	@Override
-	public String toString() {
-		final StringJoiner joiner=new StringJoiner(",");
-		properties.forEach(x->joiner.add(x.toString()));
-		return joiner.toString();
-	}
-
-	@Override
 	public Iterator<QualifiedProperty<? extends Entity,?>> iterator() {
 		return properties.iterator();
 	}
@@ -53,11 +44,13 @@ class PropertyList implements Iterable<QualifiedProperty<? extends Entity,?>>{
 		return properties.size();
 	}
 	
+	
 	/**
 	 * Checks if {@code properties} starts with same items in the same order as {@code subList}  
 	 * @param subList
 	 * @return true if check successful
 	 */
+	/*
 	public boolean isSubList(final PropertyList subList) {
 		if(subList.size()>size()) return false;
 		else {
@@ -70,12 +63,12 @@ class PropertyList implements Iterable<QualifiedProperty<? extends Entity,?>>{
 			return true;
 		}
 	}
-	
+	*/
 	/**
 	 * Merges two property lists into new one
 	 * @param list list to merge
 	 * @return resulting list that contains items from both  
-	 */
+	 *//*
 	public PropertyList merge(final PropertyList list){
 		final PropertyList result=new PropertyList();
 		result.addProperties(properties);
@@ -83,6 +76,6 @@ class PropertyList implements Iterable<QualifiedProperty<? extends Entity,?>>{
 				if(!result.contains(prop)) result.addProperty(prop);
 		});
 		return result;
-	}
+	}*/
 
 }

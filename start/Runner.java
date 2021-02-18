@@ -3,29 +3,27 @@ package start;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.Date;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Scanner;
+
 import entity.beans.Country;
 import entity.beans.Location;
+import entity.beans.PurchaseOrder;
+import entity.beans.OrderItem;
 import entity.beans.Person;
 import entity.beans.Product;
 import entity.definition.DataSource;
-import entity.definition.Entity.PrimaryKey;
 import entity.definition.EntitySource;
 import entity.persistence.BasicEntityManager;
-import entity.persistence.EntityManager;
+import math.Cardinal;
 import query.definition.Query;
-import query.definition.result.AbstractQueryResult;
+import query.definition.result.SQLQueryResult;
 import query.exceptions.QueryException;
 import query.processor.BasicQueryProcessor;
 import query.processor.SQLServerProcessor;
@@ -34,6 +32,8 @@ import query.definition.Entry;
 
 public class Runner {
 
+	private static final String PASSWORD="pass";
+	
 	public static void main(final String... args) throws QueryException {
 		//testQueries(args);
 		
@@ -48,48 +48,123 @@ public class Runner {
 			  //info.put("password", System.getProperty("password"));
 			  try (final Connection conn=DriverManager.getConnection(info.getProperty("uri"),info)){
 				  
-				  EntityManager eM=new BasicEntityManager(conn);
-				  
-				  eM.persist(new Product(LocalDateTime.now(),"Apple",BigDecimal.valueOf(5),Product.Status.IN_STOCK));
-				  eM.persist(new Product(LocalDateTime.now(),"Orange",BigDecimal.valueOf(4),Product.Status.RUNNING_LOW));
-				  eM.persist(new Product(LocalDateTime.now(),"Tomato",BigDecimal.valueOf(3),Product.Status.IN_STOCK));
-				  eM.persist(new Product(LocalDateTime.now(),"Pear",BigDecimal.valueOf(7),Product.Status.OUT_OF_STOCK));
-				  eM.persist(new Product(LocalDateTime.now(),"Banana",BigDecimal.valueOf(8),Product.Status.RUNNING_LOW));
-				  eM.persist(new Product(LocalDateTime.now(),"Cucumber",BigDecimal.valueOf(6),Product.Status.IN_STOCK));
-				  eM.persist(new Product(LocalDateTime.now(),"Tangerine",BigDecimal.valueOf(5),Product.Status.IN_STOCK));
-				  eM.persist(new Product(LocalDateTime.now(),"Lemon",BigDecimal.valueOf(4),Product.Status.IN_STOCK));
-				  eM.persist(new Product(LocalDateTime.now(),"Potato",BigDecimal.valueOf(1),Product.Status.RUNNING_LOW));
-				  eM.persist(new Product(LocalDateTime.now(),"Onion",BigDecimal.valueOf(2),Product.Status.IN_STOCK));
-				  eM.persist(new Product(LocalDateTime.now(),"Carrot",BigDecimal.valueOf(3),Product.Status.OUT_OF_STOCK));
-				  eM.persist(new Product(LocalDateTime.now(),"Onion",BigDecimal.valueOf(2),Product.Status.RUNNING_LOW));
-				  Product productA=new Product(LocalDateTime.now(),"Watermelon",BigDecimal.valueOf(4),Product.Status.IN_STOCK);
-				  eM.persist(productA);
-				  //System.out.println(productA);
-				  
-				  productA.setValue("name", "Melon");
-				  eM.merge(productA);
-				  //System.out.println(productA);
-				  
-				  Optional<Product> productB=eM.find(Product.class,productA.id());
-				  //System.out.println(productB);
-				  
-				  final Query query1=new Query();
-				  final Entry<Product> productEntry=query1.addEntry(Product.class);
-				  productEntry.select("name","price","status");
-					
-				  final SQLServerProcessor sqlProcessor=new SQLServerProcessor(conn,query1);
-				  System.out.printf("\n1'st SQL statement: %s\n",query1.getSQLStatement());
-				  final AbstractQueryResult query1Result=sqlProcessor.fetch();
-				  System.out.printf("Products: fetched %d record(s)\n%s\n",query1Result.getTupleCount(),query1Result);
+				  try(final BasicEntityManager eM=new BasicEntityManager(conn)){
 					  
-				  eM.remove(Product.class,productA.id());
-				  System.out.println(eM.removeAll(Product.class));
+					  Product productA;
+					  OrderItem orderItem;
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Apple",BigDecimal.valueOf(5),Product.Status.IN_STOCK));
+					  eM.persist(orderItem=new OrderItem(4,productA));
+					  eM.persist(orderItem=new OrderItem(1,productA));
 					  
-			  } catch (SQLException e) { // TODO Auto-generated catch block
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Orange",BigDecimal.valueOf(4),Product.Status.RUNNING_LOW));
+					  eM.persist(orderItem=new OrderItem(5,productA));
+					  eM.persist(orderItem=new OrderItem(3,productA));
+					  
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Tomato",BigDecimal.valueOf(3),Product.Status.IN_STOCK));
+					  eM.persist(orderItem=new OrderItem(2,productA));
+					  eM.persist(orderItem=new OrderItem(2,productA));
+					  
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Pear",BigDecimal.valueOf(7),Product.Status.OUT_OF_STOCK));
+					  eM.persist(orderItem=new OrderItem(4,productA));
+					  eM.persist(orderItem=new OrderItem(2,productA));
+					  
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Banana",BigDecimal.valueOf(8),Product.Status.RUNNING_LOW));
+					  eM.persist(orderItem=new OrderItem(7,productA));
+					  eM.persist(orderItem=new OrderItem(8,productA));
+					  
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Cucumber",BigDecimal.valueOf(6),Product.Status.IN_STOCK));
+					  eM.persist(orderItem=new OrderItem(9,productA));
+					  eM.persist(orderItem=new OrderItem(4,productA));
+					  
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Tangerine",BigDecimal.valueOf(5),Product.Status.IN_STOCK));
+					  eM.persist(orderItem=new OrderItem(8,productA));
+					  eM.persist(orderItem=new OrderItem(5,productA));
+					  
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Lemon",BigDecimal.valueOf(4),Product.Status.IN_STOCK));
+					  eM.persist(orderItem=new OrderItem(4,productA));
+					  eM.persist(orderItem=new OrderItem(3,productA));
+					  
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Potato",BigDecimal.valueOf(1),Product.Status.RUNNING_LOW));
+					  eM.persist(orderItem=new OrderItem(2,productA));
+					  eM.persist(orderItem=new OrderItem(4,productA));
+					  
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Cabbage",BigDecimal.valueOf(2),Product.Status.IN_STOCK));
+					  eM.persist(orderItem=new OrderItem(3,productA));
+					  eM.persist(orderItem=new OrderItem(3,productA));
+					  
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Carrot",BigDecimal.valueOf(3),Product.Status.OUT_OF_STOCK));
+					  eM.persist(orderItem=new OrderItem(5,productA));
+					  eM.persist(orderItem=new OrderItem(7,productA));
+					  
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Onion",BigDecimal.valueOf(2),Product.Status.RUNNING_LOW));
+					  eM.persist(orderItem=new OrderItem(6,productA));
+					  eM.persist(orderItem=new OrderItem(6,productA));
+					  
+					  eM.persist(productA=new Product(LocalDateTime.now(),"Watermelon",BigDecimal.valueOf(4),Product.Status.IN_STOCK));
+					  eM.persist(orderItem=new OrderItem(7,productA));
+					  eM.persist(orderItem=new OrderItem(9,productA));
+					  //System.out.println(productA);
+					  
+					  productA.setValue("name", "Melon");
+					  eM.merge(productA);
+					  //System.out.println(productA);
+					  
+					  orderItem.setValue("quantity", 10);
+					  eM.merge(orderItem);
+					  //System.out.println(orderItem);
+					  
+					  Optional<Product> productB=eM.find(Product.class,productA.id());
+					  //System.out.println(productB);
+					  Optional<OrderItem> orderItemB=eM.find(OrderItem.class,orderItem.id());
+					  //System.out.println(orderItemB);
+					  
+					  final Query query1=new Query();
+					  query1.addEntry(Product.class).select("name","price","status");
+						
+					  final SQLQueryResult query1Result=new SQLServerProcessor(eM,query1).fetch();
+					  System.out.printf("\n1'st SQL statement: %s\nProducts: fetched %d record(s)\n%s\n",
+							  query1Result.getSQLStatement(),
+							  query1Result.getTupleCount(),
+							  query1Result);
+						  
+					  final Query query2=new Query();
+					  final Entry<Product> productEntry2=query2.addEntry(Product.class);
+					  final Entry<OrderItem> orderItemEntry2=query2.addEntry(OrderItem.class);
+					  productEntry2.select("name","price","status","createdAt");
+					  final AggregationProperty<OrderItem,Cardinal> quantityTotal=new AggregationProperty<>(orderItemEntry2,"quantity",AggregationProperty.INTEGER_TOTAL);
+					  orderItemEntry2.aggregate(quantityTotal);//"quantity",AggregationProperty.INTEGER_TOTAL
+					  productEntry2.groupBy("name");
+					  orderItemEntry2.sortByDesc(quantityTotal);
+						
+					  final SQLQueryResult query2Result=new SQLServerProcessor(eM,query2).fetch();
+					  System.out.printf("\n2'nd SQL statement: %s\nProducts: fetched %d record(s)\n%s\n",
+							  query2Result.getSQLStatement(),
+							  query2Result.getTupleCount(),
+							  query2Result);
+						  
+					  //eM.remove(Product.class,productA.id());
+
+					  System.out.println("Please enter password to purge data:");
+					  Scanner scan=new Scanner(System.in);
+					  String password=scan.next();
+					  if(PASSWORD.equals(password)) {
+						  System.out.println();
+						  System.out.println(eM.removeAll(Product.class));
+						  System.out.println(eM.removeAll(OrderItem.class));
+						  System.out.println(eM.removeAll(PurchaseOrder.class));
+						  System.out.println("Data were purged successfully.");
+					  }else {
+						  System.out.println("You entered wrong password.");
+					  }
+
+				  } catch (Exception e) {
+					e.printStackTrace();
+				}
+			  } catch (SQLException e) {
 				  e.printStackTrace(); 
+			  }finally {
 			  }
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		

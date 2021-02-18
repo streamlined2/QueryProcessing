@@ -11,6 +11,7 @@ import query.definition.Query;
 import query.definition.Tuple;
 import query.exceptions.QueryException;
 import query.exceptions.SQLQueryFailedException;
+import query.processor.SQLServerProcessor;
 
 /**
  * Copies and collects tuples from passed {@code ResultSet}
@@ -21,8 +22,8 @@ public class SQLQueryResult extends AbstractQueryResult {
 	
 	private final List<Tuple> tuples=new ArrayList<>();
 	
-	public SQLQueryResult(final Query query,final ResultSet resultSet) throws QueryException {
-		super(query);
+	public SQLQueryResult(final Query query,final SQLServerProcessor processor,final ResultSet resultSet) throws QueryException {
+		super(query,processor);
 		fillTuples(resultSet);
 	}
 	
@@ -43,7 +44,7 @@ public class SQLQueryResult extends AbstractQueryResult {
 	@Override public String toString() {
 		final StringJoiner resultJoiner=new StringJoiner("\n");
 		for(final Tuple tuple:tuples) {
-			final StringJoiner rowJoiner=new StringJoiner(":","[","]");
+			final StringJoiner rowJoiner=new StringJoiner(" - ","[","]");
 			for(int k=0;k<tuple.getDimension();k++) {
 				rowJoiner.add(tuple.getValue(k).toString());
 			}
@@ -60,6 +61,10 @@ public class SQLQueryResult extends AbstractQueryResult {
 	@Override
 	public long getTupleCount() {
 		return tuples.size();
+	}
+	
+	public final String getSQLStatement(){
+		return ((SQLServerProcessor)processor).getSQLStatement();
 	}
 
 }

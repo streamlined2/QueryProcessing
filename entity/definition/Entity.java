@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.SQLInput;
 import java.sql.SQLOutput;
 import java.util.Arrays;
+import java.util.Objects;
 
 import query.exceptions.EntitySetterException;
 
@@ -22,18 +23,42 @@ import query.exceptions.EntitySetterException;
 public abstract class Entity implements Serializable, Cloneable, Comparable<Entity> {
 	
 	public static class PrimaryKey implements Serializable/*, SQLData*/ {
-		private BigDecimal value;
+		private final BigDecimal value;
+		private final Class<? extends Entity> entityClass;
 		
-		public PrimaryKey(final BigDecimal value) {this.value=value;}
+		public PrimaryKey(final Class<? extends Entity> entityClass,final BigDecimal value) { 
+			this.entityClass=entityClass;
+			this.value=value;
+		}
+		
+		public PrimaryKey(final Class<? extends Entity> entityClass,final Integer value) { 
+			this.entityClass=entityClass;
+			this.value=BigDecimal.valueOf(value);
+		}
+		
+		//primary key value to store in tuple 
+		public final Object internalValue() {
+			return value;
+		}
+		
+		public final Class<? extends Entity> getEntityClass(){
+			return entityClass;
+		}
 		
 		//implementation specific 
 		public void setPrimaryKeyInStatement(final PreparedStatement statement,final int index) throws SQLException {
 			statement.setBigDecimal(index, value);
 		}
 		
-		@Override public boolean equals(final Object o) { return o instanceof PrimaryKey key?value.equals(key.value):false;};
+		@Override public boolean equals(final Object o) { 
+			return o instanceof PrimaryKey key?
+					entityClass==key.entityClass && value.equals(key.value):
+						false;
+		};
 		
-		@Override public int hashCode() { return value.hashCode();}
+		@Override public int hashCode() { 
+			return Objects.hash(entityClass,value);
+		}
 		
 		@Override public String toString() { return value.toString();}
 		/*

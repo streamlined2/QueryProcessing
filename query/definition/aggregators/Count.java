@@ -9,4 +9,8 @@ public class Count<T extends Numeric> extends Aggregator<T,T> {
 		return (T)value.one();
 	}
 
+	@Override public String getName() { 
+		return "COUNT";
+	}
+	
 }

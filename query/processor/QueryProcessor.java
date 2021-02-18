@@ -27,10 +27,10 @@ public interface QueryProcessor {
 				throw new NoDataException(entry.getEntityClass(),dataSource);
 		}
 	}
-	
+	/*
 	public default void checkIfOrderGroupClausesCompatible() throws OrderGroupClausesNotCompatibleException {
 		if(!getQuery().groupByEmpty() && !getQuery().aggregatingByOrderProperties()) 
 			throw new OrderGroupClausesNotCompatibleException(getQuery());
-	}
+	}*/
 	
 }

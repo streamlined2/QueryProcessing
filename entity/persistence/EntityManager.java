@@ -10,7 +10,7 @@ import query.exceptions.QueryException;
  * @author Serhii Pylypenko
  *
  */
-public interface EntityManager {
+public interface EntityManager extends AutoCloseable {
 	
 	<E extends Entity> Optional<E> find(Class<E> entityClass,PrimaryKey primaryKey) throws QueryException;
 	

@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
@@ -13,9 +12,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -24,11 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import query.exceptions.QueryException;
-import start.Runner;
 
 /**
  * Entity inspection & analysis utility class 
@@ -64,18 +57,20 @@ public final class EntityInspector {
 			List<ObjectStreamField> data) implements Iterable<ObjectStreamField> {
 		
 		private static final String PRIMARY_KEY_ID="ID";
-		private static final String REFERENCE_SUFFIX="_ID";
+		//private static final String REFERENCE_SUFFIX="_ID";
 		
 		public static String getPrimaryKeyName() {
 			return PRIMARY_KEY_ID;
 		}
 
 		public static boolean isForeignKeyReference(final ObjectStreamField property) {
-			return 
-					property.getName().regionMatches(true, 
-							Math.max(property.getName().length()-EntityDefinition.REFERENCE_SUFFIX.length(),0), 
-							EntityDefinition.REFERENCE_SUFFIX, 0, EntityDefinition.REFERENCE_SUFFIX.length()) && 
-					Entity.class.isAssignableFrom(property.getType());
+			return Entity.class.isAssignableFrom(property.getType()); 
+			/*
+			 * property.getName().regionMatches(true,
+			 * Math.max(property.getName().length()-EntityDefinition.REFERENCE_SUFFIX.length
+			 * (),0), EntityDefinition.REFERENCE_SUFFIX, 0,
+			 * EntityDefinition.REFERENCE_SUFFIX.length()) &&
+			 */
 		}
 		
 		public static boolean isPrimaryKeyProperty(final ObjectStreamField property) {
@@ -263,6 +258,5 @@ public final class EntityInspector {
 		return ENTITY_BEANS_PACKAGE+
 				(index!=-1?path.getName().substring(0,index):path.getName().substring(0));
 	}
-	
 
 }

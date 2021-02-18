@@ -1,6 +1,5 @@
 package query.definition;
 
-import java.util.StringJoiner;
 import java.util.function.Function;
 
 import entity.definition.Entity;
@@ -45,8 +44,8 @@ public class AggregationProperty<T extends Entity,R extends Numeric> extends Qua
 		return aggregator.map((R)data);
 	}
 	
-	@Override public String toString() {
-		return new StringJoiner(":", "[", "]").add(super.toString()).add(aggregator.toString()).toString();
+	public Aggregator<? extends Numeric,R> aggregator(){
+		return aggregator;
 	}
 	
 	@Override public int hashCode() {

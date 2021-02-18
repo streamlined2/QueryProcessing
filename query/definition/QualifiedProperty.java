@@ -35,12 +35,6 @@ public class QualifiedProperty<T extends Entity,R> {
 					Optional.ofNullable(property.getValue(source));
 	}
 	
-	@Override public String toString() {
-		return new StringBuilder().
-				append(entry.getAlias()).append(".").
-				append(property).toString();
-	}
-	
 	@Override public int hashCode() {
 		return Objects.hash(entry,property);
 	}

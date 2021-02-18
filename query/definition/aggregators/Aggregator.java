@@ -15,5 +15,7 @@ public abstract class Aggregator<R extends Numeric,T extends Numeric> {
 	public final R apply(Numeric accumulated,Numeric value) {
 		return accumulate((R)accumulated,map((T)value));
 	}
+	
+	public abstract String getName();
 
 }

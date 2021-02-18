@@ -25,6 +25,11 @@ public class GetterProperty<T extends Entity, R> implements Property<R> {
 		}
 	}
 	
+	@Override
+	public String getName() {
+		return method.getName();
+	}
+	
 	@SuppressWarnings("unchecked") @Override
 	public R getValue(final Optional<? extends Entity> entity) {
 		try {

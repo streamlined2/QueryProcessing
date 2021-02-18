@@ -4,12 +4,10 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.StringJoiner;
-
 import collections.FilteredIterator;
 import entity.definition.Entity;
 
-class AggregationList implements Iterable<AggregationProperty<? extends Entity,?>>{
+public class AggregationList implements Iterable<AggregationProperty<? extends Entity,?>>{
 	private List<AggregationProperty<? extends Entity,?>> properties=new LinkedList<>();
 	
 	void addProperty(final AggregationProperty<? extends Entity,?> property) {
@@ -20,13 +18,6 @@ class AggregationList implements Iterable<AggregationProperty<? extends Entity,?
 		this.properties.addAll(Arrays.asList(properties));
 	}
 	
-	@Override
-	public String toString() {
-		final StringJoiner joiner=new StringJoiner(",");
-		properties.forEach(x->joiner.add(x.toString()));
-		return joiner.toString();
-	}
-
 	@Override
 	public Iterator<AggregationProperty<? extends Entity,?>> iterator() {
 		return properties.iterator();
